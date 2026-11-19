@@ -38,12 +38,16 @@ class _Platform extends ClockPlatform {
   }
 }
 
-Future<void> _tap(WidgetTester tester, String label) async {
+Future<void> _tap(
+  WidgetTester tester,
+  String label, {
+  double scroll = 200,
+}) async {
   final target = find.text(label);
   if (target.evaluate().isEmpty) {
     await tester.scrollUntilVisible(
       target,
-      200,
+      scroll,
       scrollable: find
           .byWidgetPredicate(
             (widget) =>
@@ -82,6 +86,17 @@ void main() {
       digits: '12:00',
       period: 'PM',
     ));
+    final evening = DateTime(2026, 1, 1, 19, 4, 9);
+    expect(
+      clockReading(
+        evening,
+        ClockFormat.h12,
+        device24: true,
+        seconds: true,
+        padHour: true,
+      ),
+      (digits: '07:04:09', period: 'PM'),
+    );
   });
 
   test(
@@ -108,6 +123,111 @@ void main() {
       expect(const ClockSettings().contrast, greaterThan(7));
     },
   );
+
+  test('each analog hand retains its own color, length and thickness', () {
+    final values = {
+      ...const ClockSettings().toMap(),
+      'variant': 'analog',
+      'dial.seconds': true,
+      'dial.labels': 'numbers',
+      'hour.color': 0x987654,
+      'hour.length': 40,
+      'hour.weight': 'regular',
+      'minute.color': 0x10b57c,
+      'minute.length': 95,
+      'minute.weight': 'slim',
+      'second.color': 0xfedcba,
+      'second.length': 70,
+      'second.weight': 'bold',
+    };
+    final settings = ClockSettings.fromMap(values);
+    expect(settings.seconds, isTrue);
+    expect(settings.dial.labels, DialLabels.numbers);
+    expect(settings.dial.hour.length, 40);
+    expect(settings.dial.minute.weight, HandWeight.slim);
+    expect(rgb(settings.dial.second.color), 0xfedcba);
+    expect(settings.toMap(), values);
+    final invalid = ClockSettings.fromMap({
+      ...values,
+      'minute.length': 10,
+      'second.color': -1,
+    });
+    expect(invalid.dial.minute.length, const DialStyle().minute.length);
+    expect(invalid.dial.second.color, const DialStyle().second.color);
+    expect(invalid.dial.hour.length, 40);
+  });
+
+  testWidgets('switching faces preserves each set of digits after saving', (
+    tester,
+  ) async {
+    final platform = _Platform()
+      ..saved = ClockSettings.fromMap({'digits': 0xf1c04a, 'font': 'serif'});
+    await tester.pumpWidget(HearClockApp(platform: platform));
+    await tester.pumpAndSettle();
+    await _tap(tester, 'Settings');
+    await _tap(tester, 'Show seconds');
+    await _tap(tester, 'Stacked', scroll: -200);
+    expect(find.text('Show seconds'), findsNothing);
+    await _tap(tester, 'Minute digit color');
+    await _tap(tester, 'Mint');
+    await _tap(tester, 'Use color');
+    await _tap(tester, 'Small');
+    await _tap(tester, 'Leading zero in 12-hour time');
+    await _tap(tester, 'Save settings');
+    expect(platform.saved.variant, FaceVariant.stacked);
+    expect(platform.saved.digital.font, DigitFont.serif);
+    expect(platform.saved.digital.seconds, isTrue);
+    expect(platform.saved.stacked.size, DigitSize.small);
+    expect(colorName(platform.saved.stacked.minuteColor), 'Mint');
+    expect(platform.saved.stacked.padHour, isTrue);
+    expect(platform.saved.seconds, isFalse);
+    await _tap(tester, 'Settings');
+    await _tap(tester, 'Digital');
+    await _tap(tester, 'Save settings');
+    expect(platform.saved.seconds, isTrue);
+    expect(rgb(platform.saved.digital.digits), 0xf1c04a);
+    expect(colorName(platform.saved.stacked.minuteColor), 'Mint');
+  });
+
+  testWidgets('a customized second hand speaks from the analog face', (
+    tester,
+  ) async {
+    final platform = _Platform();
+    await tester.pumpWidget(HearClockApp(platform: platform));
+    await tester.pumpAndSettle();
+    await _tap(tester, 'Settings');
+    await _tap(tester, 'Analog');
+    await _tap(tester, 'All numbers');
+    await _tap(tester, 'Show second hand');
+    await _tap(tester, 'Second hand');
+    await _tap(tester, 'Second hand color');
+    await _tap(tester, 'Yellow');
+    await _tap(tester, 'Use color');
+    final length = find.byWidgetPredicate(
+      (widget) => widget is Slider && widget.min == 35,
+    );
+    await tester.scrollUntilVisible(
+      length,
+      100,
+      scrollable: find.byType(Scrollable).last,
+    );
+    tester.widget<Slider>(length).onChanged!(65);
+    await tester.pump();
+    await _tap(tester, 'Bold');
+    await _tap(tester, 'Save settings');
+    expect(platform.saved.dial.labels, DialLabels.numbers);
+    expect(platform.saved.dial.hour.length, 55);
+    expect(platform.saved.dial.minute.weight, HandWeight.regular);
+    expect(platform.saved.dial.second.length, 65);
+    expect(platform.saved.dial.second.weight, HandWeight.bold);
+    expect(colorName(platform.saved.dial.second.color), 'Yellow');
+    final clock = find.bySemanticsLabel(RegExp(r'^Local time, \d+:\d\d:\d\d'));
+    expect(clock, findsOneWidget);
+    await tester.tap(clock);
+    await tester.pumpAndSettle();
+    expect(platform.readings.single.variant, FaceVariant.analog);
+    expect(platform.readings.single.seconds, isTrue);
+  });
 
   testWidgets(
     'clock exposes one speaking action with a label and sufficient target size',

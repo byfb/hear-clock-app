@@ -85,7 +85,7 @@ internal object TimeSpeaker {
                         request.finish(R.string.speech_error)
                         return@post
                     }
-                    val pattern = settings.pattern(spokenLocale, settings.uses24Hours(app))
+                    val pattern = settings.pattern(spokenLocale, settings.uses24Hours(app), spoken = true)
                     val words = SimpleDateFormat(pattern, spokenLocale).format(timeAtTap)
                     engine.setAudioAttributes(
                         AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)

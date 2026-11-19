@@ -46,23 +46,169 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _pickColor({required bool digits}) async {
-    final color = await Navigator.push<Color>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ColorScreen(
-          digits: digits,
-          settings: _draft,
-          platform: widget.platform,
+  ClockHand _hand = ClockHand.hour;
+
+  Widget _color(
+    String label,
+    Color initial,
+    ClockSettings Function(Color) change,
+  ) => _ColorRow(
+    label: label,
+    color: initial,
+    onTap: () async {
+      final color = await Navigator.push<Color>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ColorScreen(
+            title: label,
+            initial: initial,
+            preview: change,
+            platform: widget.platform,
+          ),
+        ),
+      );
+      if (mounted && color != null) setState(() => _draft = change(color));
+    },
+  );
+
+  void _editDigits(DigitStyle style) =>
+      setState(() => _draft = _draft.withText(style));
+
+  List<Widget> _digitControls() {
+    final style = _draft.text;
+    final stacked = _draft.variant == FaceVariant.stacked;
+    return [
+      _color(
+        stacked ? 'Hour digit color' : 'Digit color',
+        style.digits,
+        (c) => _draft.withText(style.copyWith(digits: c)),
+      ),
+      if (stacked)
+        _color(
+          'Minute digit color',
+          style.minuteColor,
+          (c) => _draft.withText(style.copyWith(minuteColor: c)),
+        ),
+      const Divider(height: 1),
+      _color(
+        'Background color',
+        style.face,
+        (c) => _draft.withText(style.copyWith(face: c)),
+      ),
+      const Divider(height: 1),
+      _Choices<DigitSize>(
+        label: 'Digit size',
+        values: DigitSize.values,
+        selected: style.size,
+        name: (v) => v.label,
+        onChange: (v) => _editDigits(style.copyWith(size: v)),
+      ),
+      _Choices<DigitFont>(
+        label: 'Typeface',
+        values: DigitFont.values,
+        selected: style.font,
+        name: (v) => v.label,
+        onChange: (v) => _editDigits(style.copyWith(font: v)),
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Bold digits'),
+        value: style.bold,
+        onChanged: (v) => _editDigits(style.copyWith(bold: v)),
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Leading zero in 12-hour time'),
+        value: style.padHour,
+        onChanged: (v) => _editDigits(style.copyWith(padHour: v)),
+      ),
+      if (!stacked)
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Show seconds'),
+          value: style.seconds,
+          onChanged: (v) => _editDigits(style.copyWith(seconds: v)),
+        ),
+    ];
+  }
+
+  List<Widget> _dialControls() {
+    final dial = _draft.dial;
+    final selected = !dial.seconds && _hand == ClockHand.second
+        ? ClockHand.hour
+        : _hand;
+    final hand = dial.hand(selected);
+    final title = selected.label;
+    void update(DialStyle next) =>
+        setState(() => _draft = _draft.copyWith(dial: next));
+    return [
+      _color(
+        'Background color',
+        dial.face,
+        (c) => _draft.copyWith(dial: dial.copyWith(face: c)),
+      ),
+      _color(
+        'Marking color',
+        dial.marks,
+        (c) => _draft.copyWith(dial: dial.copyWith(marks: c)),
+      ),
+      _Choices<DialLabels>(
+        label: 'Dial markings',
+        values: DialLabels.values,
+        selected: dial.labels,
+        name: (v) => v.label,
+        onChange: (v) => update(dial.copyWith(labels: v)),
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Show second hand'),
+        value: dial.seconds,
+        onChanged: (v) => update(dial.copyWith(seconds: v)),
+      ),
+      const Divider(height: 1),
+      _Choices<ClockHand>(
+        label: 'Customize a hand',
+        values: [
+          ClockHand.hour,
+          ClockHand.minute,
+          if (dial.seconds) ClockHand.second,
+        ],
+        selected: selected,
+        name: (v) => v.label,
+        onChange: (v) => setState(() => _hand = v),
+      ),
+      _color(
+        '$title color',
+        hand.color,
+        (c) => _draft.copyWith(
+          dial: dial.withHand(selected, hand.copyWith(color: c)),
         ),
       ),
-    );
-    if (color == null || !mounted) return;
-    setState(
-      () => _draft = digits
-          ? _draft.copyWith(digits: color)
-          : _draft.copyWith(face: color),
-    );
+      Text(
+        '$title length, ${hand.length}%',
+        style: const TextStyle(fontSize: 18),
+      ),
+      Semantics(
+        label: '$title length',
+        child: Slider(
+          min: 35,
+          max: 95,
+          divisions: 12,
+          value: hand.length.toDouble(),
+          semanticFormatterCallback: (v) => '${v.round()} percent',
+          onChanged: (v) =>
+              update(dial.withHand(selected, hand.copyWith(length: v.round()))),
+        ),
+      ),
+      _Choices<HandWeight>(
+        label: '$title thickness',
+        values: HandWeight.values,
+        selected: hand.weight,
+        name: (v) => v.label,
+        onChange: (v) =>
+            update(dial.withHand(selected, hand.copyWith(weight: v))),
+      ),
+    ];
   }
 
   Future<void> _pickLanguage() async {
@@ -96,22 +242,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 settings: _draft,
                 platform: widget.platform,
               ),
-              const SizedBox(height: 20),
-              _ColorRow(
-                label: 'Digit color',
-                color: _draft.digits,
-                onTap: () => _pickColor(digits: true),
+              _Choices<FaceVariant>(
+                label: 'Clock face',
+                values: FaceVariant.values,
+                selected: _draft.variant,
+                name: (v) => v.label,
+                onChange: (v) =>
+                    setState(() => _draft = _draft.copyWith(variant: v)),
               ),
-              const Divider(height: 1),
-              _ColorRow(
-                label: 'Background color',
-                color: _draft.face,
-                onTap: () => _pickColor(digits: false),
-              ),
-              const Divider(height: 1),
+              const SizedBox(height: 12),
               if (_draft.contrast < 4.5)
                 Padding(
-                  padding: const EdgeInsets.only(top: 12),
+                  padding: EdgeInsets.symmetric(vertical: 10),
                   child: Semantics(
                     liveRegion: true,
                     child: const Text(
@@ -120,29 +262,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
-              _Choices<DigitSize>(
-                label: 'Digit size',
-                values: DigitSize.values,
-                selected: _draft.size,
-                name: (v) => v.label,
-                onChange: (v) =>
-                    setState(() => _draft = _draft.copyWith(size: v)),
-              ),
-              _Choices<DigitFont>(
-                label: 'Typeface',
-                values: DigitFont.values,
-                selected: _draft.font,
-                name: (v) => v.label,
-                onChange: (v) =>
-                    setState(() => _draft = _draft.copyWith(font: v)),
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Bold digits'),
-                value: _draft.bold,
-                onChanged: (v) =>
-                    setState(() => _draft = _draft.copyWith(bold: v)),
-              ),
+              if (_draft.variant == FaceVariant.analog)
+                ..._dialControls()
+              else
+                ..._digitControls(),
               const Divider(height: 1),
               _Choices<ClockFormat>(
                 label: 'Time format',

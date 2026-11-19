@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Hear Clock</string>
+    <bool name="legacy_second_hand_service">true</bool>
+    <string name="second_hand">Second hand</string>
+    <string name="legacy_seconds">Updating the widget’s second hand</string>
     <string name="voice_unavailable">This speech language is unavailable. Choose an installed voice in Clock settings.</string>
     <string name="widget_description">Tap to hear the local time. Touch and hold to resize.</string>
     <string name="speech_error">Couldn’t read the time. Check your Android text-to-speech voice and try again.</string>

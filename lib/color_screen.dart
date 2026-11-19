@@ -23,12 +23,14 @@ class ColorSwatchMark extends StatelessWidget {
 class ColorScreen extends StatefulWidget {
   const ColorScreen({
     super.key,
-    required this.digits,
-    required this.settings,
+    required this.title,
+    required this.initial,
+    required this.preview,
     required this.platform,
   });
-  final bool digits;
-  final ClockSettings settings;
+  final String title;
+  final Color initial;
+  final ClockSettings Function(Color) preview;
   final ClockPlatform platform;
 
   @override
@@ -37,9 +39,7 @@ class ColorScreen extends StatefulWidget {
 
 class _ColorScreenState extends State<ColorScreen> {
   static final _hex = RegExp(r'^#?([0-9a-fA-F]{6})$');
-  late Color _picked = widget.digits
-      ? widget.settings.digits
-      : widget.settings.face;
+  late Color _picked = widget.initial;
   late final _input = TextEditingController(text: hexColor(_picked));
   String? _error;
 
@@ -76,14 +76,9 @@ class _ColorScreenState extends State<ColorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final preview = widget.digits
-        ? widget.settings.copyWith(digits: _picked)
-        : widget.settings.copyWith(face: _picked);
+    final preview = widget.preview(_picked);
     return Scaffold(
-      appBar: ClockTheme.settingsBar(
-        context,
-        widget.digits ? 'Digit color' : 'Background color',
-      ),
+      appBar: ClockTheme.settingsBar(context, widget.title),
       body: SafeArea(
         top: false,
         child: Center(

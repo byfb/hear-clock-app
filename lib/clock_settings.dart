@@ -4,26 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'clock_theme.dart';
-
-enum DigitFont {
-  mono('Mono', ClockTheme.mono),
-  sans('Sans serif', ClockTheme.sans),
-  serif('Serif', ClockTheme.serif);
-
-  const DigitFont(this.label, this.family);
-  final String label;
-  final String family;
-}
-
-enum DigitSize {
-  small('Small', .56),
-  medium('Medium', .74),
-  large('Large', .91);
-
-  const DigitSize(this.label, this.fraction);
-  final String label;
-  final double fraction;
-}
+import 'face_styles.dart';
+export 'face_styles.dart';
 
 enum ClockFormat {
   device('Device'),
@@ -34,7 +16,6 @@ enum ClockFormat {
   final String label;
 }
 
-int rgb(Color color) => color.toARGB32() & 0xffffff;
 String hexColor(Color color) =>
     rgb(color).toRadixString(16).padLeft(6, '0').toUpperCase();
 
@@ -63,91 +44,104 @@ class SpeechLanguage {
 @immutable
 class ClockSettings {
   const ClockSettings({
-    this.digits = ClockTheme.digits,
-    this.face = ClockTheme.panel,
-    this.font = DigitFont.mono,
-    this.size = DigitSize.large,
-    this.bold = false,
+    this.variant = FaceVariant.digital,
+    this.digital = const DigitStyle(),
+    this.stacked = const DigitStyle(),
+    this.dial = const DialStyle(),
     this.format = ClockFormat.device,
     this.language = SpeechLanguage.device,
     this.speechRate = 100,
   });
 
-  final Color digits;
-  final Color face;
-  final DigitFont font;
-  final DigitSize size;
-  final bool bold;
+  final FaceVariant variant;
+  final DigitStyle digital, stacked;
+  final DialStyle dial;
   final ClockFormat format;
   final SpeechLanguage language;
   final int speechRate;
 
-  factory ClockSettings.fromMap(Map<Object?, Object?> map) {
-    const defaults = ClockSettings();
-    Color color(String key, Color fallback) {
-      final value = map[key];
-      return value is int && value >= 0 && value <= 0xffffff
-          ? Color(0xff000000 | value)
-          : fallback;
-    }
+  DigitStyle get text => variant == FaceVariant.stacked ? stacked : digital;
+  Color get face => variant == FaceVariant.analog ? dial.face : text.face;
+  bool get seconds => switch (variant) {
+    FaceVariant.digital => digital.seconds,
+    FaceVariant.stacked => false,
+    FaceVariant.analog => dial.seconds,
+  };
 
-    T choice<T extends Enum>(String key, List<T> values, T fallback) =>
-        values.where((v) => v.name == map[key]).firstOrNull ?? fallback;
+  factory ClockSettings.fromMap(Map<Object?, Object?> map) {
     final tag = map['speech.language'];
     final label = map['speech.label'];
-    final rate = map['speech.rate'];
     return ClockSettings(
-      digits: color('digits', defaults.digits),
-      face: color('face', defaults.face),
-      font: choice('font', DigitFont.values, defaults.font),
-      size: choice('size', DigitSize.values, defaults.size),
-      bold: map['bold'] == true,
-      format: choice('format', ClockFormat.values, defaults.format),
+      variant: map.enumValue(
+        'variant',
+        FaceVariant.values,
+        FaceVariant.digital,
+      ),
+      digital: DigitStyle.decode(map, ''),
+      stacked: DigitStyle.decode(map, 'stack.'),
+      dial: DialStyle.decode(map),
+      format: map.enumValue('format', ClockFormat.values, ClockFormat.device),
       language: tag is String && tag.isNotEmpty
           ? SpeechLanguage(
               tag,
               label is String && label.isNotEmpty ? label : tag,
             )
           : SpeechLanguage.device,
-      speechRate: rate is int && rate >= 50 && rate <= 200 ? rate : 100,
+      speechRate: map.intValue('speech.rate', 50, 200, 100),
     );
   }
 
   Map<String, Object> toMap() => {
-    'digits': rgb(digits),
-    'face': rgb(face),
-    'font': font.name,
-    'size': size.name,
-    'bold': bold,
+    'variant': variant.name,
+    ...digital.encode(''),
+    ...stacked.encode('stack.'),
+    ...dial.encode(),
     'format': format.name,
     'speech.language': language.tag,
     'speech.rate': speechRate,
   };
 
+  ClockSettings withText(DigitStyle style) => variant == FaceVariant.stacked
+      ? copyWith(stacked: style)
+      : copyWith(digital: style);
+
   ClockSettings copyWith({
-    Color? digits,
-    Color? face,
-    DigitFont? font,
-    DigitSize? size,
-    bool? bold,
+    FaceVariant? variant,
+    DigitStyle? digital,
+    DigitStyle? stacked,
+    DialStyle? dial,
     ClockFormat? format,
     SpeechLanguage? language,
     int? speechRate,
   }) => ClockSettings(
-    digits: digits ?? this.digits,
-    face: face ?? this.face,
-    font: font ?? this.font,
-    size: size ?? this.size,
-    bold: bold ?? this.bold,
+    variant: variant ?? this.variant,
+    digital: digital ?? this.digital,
+    stacked: stacked ?? this.stacked,
+    dial: dial ?? this.dial,
     format: format ?? this.format,
     language: language ?? this.language,
     speechRate: speechRate ?? this.speechRate,
   );
 
   double get contrast {
-    final a = digits.computeLuminance();
-    final b = face.computeLuminance();
-    return (math.max(a, b) + .05) / (math.min(a, b) + .05);
+    final background = face.computeLuminance();
+    final colors = switch (variant) {
+      FaceVariant.digital => [digital.digits],
+      FaceVariant.stacked => [stacked.digits, stacked.minuteColor],
+      FaceVariant.analog => [
+        dial.marks,
+        dial.hour.color,
+        dial.minute.color,
+        if (dial.seconds) dial.second.color,
+      ],
+    };
+    return colors
+        .map((color) {
+          final foreground = color.computeLuminance();
+          return (math.max(foreground, background) + .05) /
+              (math.min(foreground, background) + .05);
+        })
+        .reduce(math.min);
   }
 }
 
