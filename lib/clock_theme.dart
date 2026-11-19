@@ -44,6 +44,9 @@ abstract final class ClockTheme {
           .copyWith(
             statusBarColor: Colors.transparent,
             systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarIconBrightness: brightness == Brightness.dark
+                ? Brightness.light
+                : Brightness.dark,
           );
 
   static AppBar settingsBar(

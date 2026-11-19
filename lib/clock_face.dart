@@ -255,7 +255,7 @@ class _DigitFace extends StatelessWidget {
         text: digits,
         children: [
           if (period.isNotEmpty)
-            TextSpan(text: ' $period', style: const TextStyle(fontSize: 35)),
+            TextSpan(text: ' $period', style: const TextStyle(fontSize: 50)),
         ],
       ),
       textDirection: TextDirection.ltr,
