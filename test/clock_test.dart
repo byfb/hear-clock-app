@@ -192,6 +192,18 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('the speech action fits a short landscape screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 360);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(HearClockApp(platform: _Platform()));
+    await tester.pumpAndSettle();
+    expect(find.text('Hear the time').hitTestable(), findsOneWidget);
+  });
+
   testWidgets(
     'launcher instructions remain reachable when pinning is unavailable',
     (tester) async {

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -146,7 +147,10 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
               final compact = widget.compact;
               final height = compact
                   ? 108.0
-                  : (bounds.maxWidth * .54).clamp(146.0, 278.0);
+                  : math.min(
+                      MediaQuery.sizeOf(context).height / 3,
+                      (bounds.maxWidth * .54).clamp(146.0, 278.0),
+                    );
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

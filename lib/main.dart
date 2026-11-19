@@ -106,6 +106,9 @@ class _HomeState extends State<_Home> {
             child: LayoutBuilder(
               builder: (context, bounds) {
                 final gutter = bounds.maxWidth > 600 ? 36.0 : 20.0;
+                final shortLandscape =
+                    bounds.maxHeight < 480 &&
+                    bounds.maxWidth > bounds.maxHeight;
                 return SingleChildScrollView(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: gutter),
@@ -148,22 +151,26 @@ class _HomeState extends State<_Home> {
                         const SizedBox(height: 14),
                         const Divider(height: 1),
                         SizedBox(
-                          height: (bounds.maxHeight * .065).clamp(24.0, 54.0),
+                          height: shortLandscape
+                              ? 12
+                              : (bounds.maxHeight * .065).clamp(24.0, 54.0),
                         ),
                         if (settings != null) ...[
-                          Semantics(
-                            header: true,
-                            child: const Text(
-                              'Local time',
-                              style: TextStyle(
-                                fontSize: 34,
-                                height: 1.18,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: -1.1,
+                          if (!shortLandscape) ...[
+                            Semantics(
+                              header: true,
+                              child: const Text(
+                                'Local time',
+                                style: TextStyle(
+                                  fontSize: 34,
+                                  height: 1.18,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -1.1,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 18),
+                            const SizedBox(height: 18),
+                          ],
                           ClockFace(
                             settings: settings,
                             platform: widget.platform,
