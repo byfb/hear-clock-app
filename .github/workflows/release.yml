@@ -1,0 +1,121 @@
+name: Android release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check-tag:
+    name: Check release tag
+    if: github.event.created && !github.event.deleted
+    runs-on: ubuntu-24.04
+    outputs:
+      eligible: ${{ steps.check.outputs.eligible }}
+      version: ${{ steps.check.outputs.version }}
+      build: ${{ steps.check.outputs.build }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Match the tag to the release branch and app version
+        id: check
+        run: |
+          commit=$(git rev-parse HEAD)
+          release_tip=$(git rev-parse --verify refs/remotes/origin/release)
+          if ! git rev-list --first-parent "$release_tip" | grep -Fx "$commit" >/dev/null; then
+            echo "Skipping $GITHUB_REF_NAME because its commit is outside the release branch."
+            exit 0
+          fi
+
+          manifest=$(awk '$1 == "version:" { print $2 }' pubspec.yaml)
+          version=${manifest%+*}
+          build=${manifest##*+}
+          if [[ ! "$manifest" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\+[1-9][0-9]*$ || "v$version" != "$GITHUB_REF_NAME" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match pubspec.yaml version $manifest."
+            exit 1
+          fi
+          test -s "docs/releases/$GITHUB_REF_NAME.md"
+          printf 'eligible=true\nversion=%s\nbuild=%s\n' "$version" "$build" >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Build and publish APK
+    needs: check-tag
+    if: needs.check-tag.outputs.eligible == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      APP_VERSION: ${{ needs.check-tag.outputs.version }}
+      BUILD_NUMBER: ${{ needs.check-tag.outputs.build }}
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Flutter and the Android SDK
+        run: |
+          git clone --quiet --depth 1 --branch 3.47.7 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = abaf9c523780a608bd46686fd5e53740a07077f8
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
+      - name: Analyze and test
+        run: |
+          flutter pub get --enforce-lockfile
+          flutter analyze --no-pub
+          flutter test --no-pub
+      - name: Build the signed universal APK
+        env:
+          ANDROID_SIGNING_KEYSTORE: ${{ secrets.ANDROID_SIGNING_KEYSTORE }}
+          HEAR_CLOCK_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
+          HEAR_CLOCK_KEYSTORE: ${{ runner.temp }}/hear-clock-release.p12
+        run: |
+          umask 077
+          trap 'rm -f "$HEAR_CLOCK_KEYSTORE"' EXIT
+          test -n "$HEAR_CLOCK_KEYSTORE_PASSWORD"
+          printf '%s' "$ANDROID_SIGNING_KEYSTORE" | base64 --decode > "$HEAR_CLOCK_KEYSTORE"
+          test -s "$HEAR_CLOCK_KEYSTORE"
+          unset ANDROID_SIGNING_KEYSTORE
+          flutter build apk --release --no-pub
+      - name: Verify the APK certificate, version, and license
+        run: |
+          binary=build/app/outputs/flutter-apk/app-release.apk
+          tools="$ANDROID_HOME/build-tools/36.0.0"
+          certificates=$("$tools/apksigner" verify --print-certs "$binary")
+          digest=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' <<< "$certificates")
+          test "$digest" = "$(cat android/release-cert.sha256)"
+          badging=$("$tools/aapt" dump badging "$binary")
+          grep -F "package: name='com.byfb.hear_clock' versionCode='$BUILD_NUMBER' versionName='$APP_VERSION'" <<< "$badging" >/dev/null
+          notices=$(unzip -p "$binary" assets/flutter_assets/NOTICES.Z | gzip -dc)
+          [[ "$notices" == *$'hear_clock\n\n'"$(cat LICENSE)"* ]] || { echo "::error::APK is missing the Hear Clock license."; exit 1; }
+          cp "$binary" "$RUNNER_TEMP/hear-clock-$APP_VERSION.apk"
+      - name: Publish the release notes and APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          asset="hear-clock-$APP_VERSION.apk"
+          notes="docs/releases/$GITHUB_REF_NAME.md"
+          if draft=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft 2>/dev/null); then
+            if [[ "$draft" == false ]]; then
+              gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' | grep -Fx "$asset"
+              exit 0
+            fi
+          else
+            gh release create "$GITHUB_REF_NAME" --verify-tag --target release --draft \
+              --title "Hear Clock $GITHUB_REF_NAME" --notes-file "$notes"
+          fi
+          gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/$asset" --clobber
+          gh release edit "$GITHUB_REF_NAME" --draft=false --notes-file "$notes"

@@ -47,9 +47,31 @@ The local test APK is written to `build/app/outputs/flutter-apk/app-release.apk`
 
 ## Create a versioned release
 
-From the repository root, run `dart run tool/release.dart minor` for a new feature, `patch` for a fix, or `major` for a breaking change. Add `--dry-run` to preview the next version. Ordinary builds reuse the current version.
+Prepare the version on the `release` branch. Use `patch` for fixes or packaging changes, `minor` for new features, and `major` for breaking changes. Each release also increments the Android build number.
 
-The release command builds the APK, increments the Android build number, records the completed version in `pubspec.yaml`, and saves the APK as `build/releases/hear-clock-<version>+<build>.apk`. Commit the version change and tag the release `v<version>`.
+```sh
+git switch release
+git pull --ff-only origin release
+git fetch origin main
+git merge --no-ff origin/main -m "chore(release): promote main"
+dart run tool/release.dart patch --prepare
+```
+
+Write the dated, user-facing notes in `docs/releases/vX.Y.Z.md`, including any upgrade steps and a changelog link. Commit the notes and `pubspec.yaml` together. Replace `X.Y.Z` below with the prepared version.
+
+```sh
+git add pubspec.yaml docs/releases/vX.Y.Z.md
+git commit -m "chore(release): prepare version X.Y.Z"
+git tag -a vX.Y.Z -m "Hear Clock X.Y.Z"
+git push origin release
+git push origin vX.Y.Z
+```
+
+A new version tag starts a check that its commit is in the first-parent history of `release` and its version matches `pubspec.yaml`. The eligible tag runs analysis and tests, builds a universal APK, verifies its version and signing certificate, and publishes it with the notes to [GitHub Releases](https://github.com/byfb/hear-clock/releases). Branch pushes do not run the workflow. Merge the released version back into `main` for the next development cycle.
+
+The repository Actions secrets `ANDROID_SIGNING_KEYSTORE` and `ANDROID_SIGNING_PASSWORD` hold the base64-encoded PKCS12 keystore and its password. Downloads from this private repository require a GitHub account with read access.
+
+For local release testing, omit `--prepare` to build an APK in `build/releases/` before recording the version. Add `--dry-run` to preview a version change.
 
 ## License
 
