@@ -76,12 +76,12 @@ internal class DialArtwork(private val settings: ClockSettings, private val side
 
     fun apply(view: RemoteViews) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            view.setIcon(R.id.live_dial, "setDial", dialIcon)
-            view.setIcon(R.id.live_dial, "setHourHand", hourIcon)
-            view.setIcon(R.id.live_dial, "setMinuteHand", minuteIcon)
-            view.setIcon(R.id.live_dial, "setSecondHand", if (settings.seconds) secondIcon else null)
+            view.setIcon(R.id.widget_dial, "setDial", dialIcon)
+            view.setIcon(R.id.widget_dial, "setHourHand", hourIcon)
+            view.setIcon(R.id.widget_dial, "setMinuteHand", minuteIcon)
+            view.setIcon(R.id.widget_dial, "setSecondHand", if (settings.seconds) secondIcon else null)
         } else {
-            view.setImageViewBitmap(R.id.legacy_dial, snapshot())
+            view.setImageViewBitmap(R.id.widget_dial, snapshot())
         }
     }
 

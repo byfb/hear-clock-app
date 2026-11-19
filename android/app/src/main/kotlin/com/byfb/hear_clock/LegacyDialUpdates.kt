@@ -1,5 +1,6 @@
 package com.byfb.hear_clock
 
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.KeyguardManager
 import android.app.Notification
@@ -30,6 +31,7 @@ internal object LegacyDialUpdates {
     private fun minuteIntent(context: Context) = PendingIntent.getBroadcast(context, 1,
         Intent(context, ClockWidget::class.java).setAction(TICK), PendingIntent.FLAG_IMMUTABLE)
 
+    @SuppressLint("MissingPermission")
     fun sync(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) return
         val settings = ClockSettings.load(context)
@@ -45,6 +47,7 @@ internal object LegacyDialUpdates {
         } else {
             context.stopService(service)
             val next = (System.currentTimeMillis() / 60000 + 1) * 60000
+            // Android 8–11 allow exact minute updates without an alarm permission.
             // RTC leaves a sleeping phone asleep. A pending tick catches up on wake.
             alarms.setExact(AlarmManager.RTC, next, minuteIntent(context))
         }
@@ -59,7 +62,7 @@ internal object LegacyDialUpdates {
     fun publish(context: Context, ids: IntArray, art: DialArtwork) {
         if (ids.isEmpty()) return
         val views = RemoteViews(context.packageName, R.layout.clock_analog)
-        views.setImageViewBitmap(R.id.legacy_dial, art.snapshot())
+        views.setImageViewBitmap(R.id.widget_dial, art.snapshot())
         AppWidgetManager.getInstance(context).partiallyUpdateAppWidget(ids, views)
     }
 }
@@ -74,12 +77,14 @@ class LegacySecondsService : Service() {
         override fun onReceive(context: Context, intent: Intent) = update()
     }
 
+    @SuppressLint("ForegroundServiceType")
     override fun onCreate() {
         super.onCreate()
         val manager = getSystemService(NotificationManager::class.java)
         val channel = "second_hand"
         manager.createNotificationChannel(NotificationChannel(channel, getString(R.string.second_hand), NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        // The manifest disables this service from API 31. Service types are required from API 34.
         startForeground(1, Notification.Builder(this, channel)
             .setContentTitle(getString(R.string.app_name)).setContentText(getString(R.string.legacy_seconds))
             .setSmallIcon(R.drawable.clock_mark).setContentIntent(open).setOnlyAlertOnce(true).setOngoing(true).build())
