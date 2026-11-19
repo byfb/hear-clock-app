@@ -4,6 +4,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseKeystore = providers.environmentVariable("HEAR_CLOCK_KEYSTORE").orNull
+
 android {
     namespace = "com.byfb.hear_clock"
     compileSdk = flutter.compileSdkVersion
@@ -26,11 +28,21 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storeType = "PKCS12"
+                storePassword = providers.environmentVariable("HEAR_CLOCK_KEYSTORE_PASSWORD").get()
+                keyAlias = "hear-clock"
+                keyPassword = storePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (releaseKeystore == null) "debug" else "release")
         }
     }
 }
