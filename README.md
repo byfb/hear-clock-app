@@ -12,7 +12,7 @@ Open **Settings** and choose a clock face. Each face remembers its own appearanc
 | Stacked | Separate colors for the hours and minutes on two lines, background color, digit size, typeface, bold digits, and a leading zero in 12-hour time |
 | Analog | Dial background, marking color, numbers or ticks, and the color, length, and thickness of each hand. Turn on **Show second hand** to edit it. |
 
-Choose a named color or enter a six-digit RGB hex value. **Time format** applies across the faces and to speech. **Device** follows the phone’s 12-hour or 24-hour preference.
+Open **Color combinations** for white on black, black on white, yellow on black, or the face’s original colors. A combination changes only that face’s colors. You can also change individual colors by name or hex value. The preview identifies the lowest-contrast digits, markings, or hand when the contrast ratio falls below 4.5:1. **Time format** applies across the faces and to speech. **Device** follows the phone’s 12-hour or 24-hour preference.
 
 Under **Speech language**, choose a language offered by your Android text-to-speech engine. Set **Speech speed** between 50% and 200% and tap **Test voice** to hear the change. **Save settings** applies your choices to the app and every placed widget. **Restore defaults** followed by **Save settings** restores the original appearance and voice settings.
 

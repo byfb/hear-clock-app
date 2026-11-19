@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'clock_face.dart';
+import 'clock_palette.dart';
 import 'clock_settings.dart';
 import 'clock_theme.dart';
 import 'color_screen.dart';
@@ -219,6 +220,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _pickPalette() async {
+    final selected = await Navigator.push<ClockPalette>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ColorCombinationsScreen(settings: _draft),
+      ),
+    );
+    if (mounted && selected != null) {
+      setState(() => _draft = selected.apply(_draft));
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: ClockTheme.settingsBar(context, 'Clock settings'),
@@ -244,20 +257,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() => _draft = _draft.copyWith(variant: v)),
               ),
               const SizedBox(height: 12),
-              if (_draft.contrast < 4.5)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      'Low contrast. Pick one light color and one dark color for easier reading.',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.contrast),
+                title: const Text('Color combinations'),
+                subtitle: Text(
+                  ClockPalette.current(_draft)?.label ?? 'Custom colors',
                 ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _pickPalette,
+              ),
+              const Divider(height: 1),
+              ContrastNote(_draft),
               if (_draft.variant == FaceVariant.analog)
                 ..._dialControls()
               else

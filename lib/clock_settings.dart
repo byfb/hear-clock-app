@@ -123,26 +123,33 @@ class ClockSettings {
     speechRate: speechRate ?? this.speechRate,
   );
 
-  double get contrast {
+  ({String part, double ratio}) get lowestContrast {
     final background = face.computeLuminance();
     final colors = switch (variant) {
-      FaceVariant.digital => [digital.digits],
-      FaceVariant.stacked => [stacked.digits, stacked.minuteColor],
-      FaceVariant.analog => [
-        dial.marks,
-        dial.hour.color,
-        dial.minute.color,
-        if (dial.seconds) dial.second.color,
-      ],
+      FaceVariant.digital => {'digits': digital.digits},
+      FaceVariant.stacked => {
+        'hour digits': stacked.digits,
+        'minute digits': stacked.minuteColor,
+      },
+      FaceVariant.analog => {
+        'dial markings': dial.marks,
+        'hour hand': dial.hour.color,
+        'minute hand': dial.minute.color,
+        if (dial.seconds) 'second hand': dial.second.color,
+      },
     };
-    return colors
-        .map((color) {
-          final foreground = color.computeLuminance();
-          return (math.max(foreground, background) + .05) /
+    return colors.entries
+        .map((entry) {
+          final foreground = entry.value.computeLuminance();
+          final ratio =
+              (math.max(foreground, background) + .05) /
               (math.min(foreground, background) + .05);
+          return (part: entry.key, ratio: ratio);
         })
-        .reduce(math.min);
+        .reduce((a, b) => a.ratio <= b.ratio ? a : b);
   }
+
+  double get contrast => lowestContrast.ratio;
 }
 
 class ClockPlatform {

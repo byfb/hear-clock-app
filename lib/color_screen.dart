@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'clock_face.dart';
+import 'clock_palette.dart';
 import 'clock_settings.dart';
 import 'clock_theme.dart';
 
@@ -18,6 +19,103 @@ class ColorSwatchMark extends StatelessWidget {
       border: Border.all(color: Theme.of(context).colorScheme.outline),
     ),
   );
+}
+
+class ContrastNote extends StatelessWidget {
+  const ContrastNote(this.settings, {super.key});
+  final ClockSettings settings;
+
+  @override
+  Widget build(BuildContext context) {
+    final pair = settings.lowestContrast;
+    if (pair.ratio >= 4.5) return const SizedBox.shrink();
+    return Semantics(
+      liveRegion: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Text(
+          'Low contrast between the ${pair.part} and the background.',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.error,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ColorCombinationsScreen extends StatelessWidget {
+  const ColorCombinationsScreen({super.key, required this.settings});
+  final ClockSettings settings;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: ClockTheme.settingsBar(context, 'Color combinations'),
+      body: SafeArea(
+        top: false,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              children: [
+                for (final palette in ClockPalette.values) ...[
+                  Semantics(
+                    button: true,
+                    selected: palette.matches(settings),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 2,
+                        vertical: 10,
+                      ),
+                      leading: ExcludeSemantics(
+                        child: Container(
+                          width: 56,
+                          height: 48,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: palette.background,
+                            border: Border.all(color: scheme.outline),
+                            borderRadius: ClockTheme.corner,
+                          ),
+                          child: Text(
+                            '12',
+                            textScaler: TextScaler.noScaling,
+                            style: TextStyle(
+                              color: palette.ink,
+                              fontFamily: ClockTheme.mono,
+                              fontSize: 27,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        palette.label,
+                        style: const TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: palette.matches(settings)
+                          ? Icon(Icons.check, color: scheme.primary)
+                          : null,
+                      onTap: () => Navigator.pop(context, palette),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class ColorScreen extends StatefulWidget {
@@ -93,6 +191,7 @@ class _ColorScreenState extends State<ColorScreen> {
                   settings: preview,
                   platform: widget.platform,
                 ),
+                ContrastNote(preview),
                 const SizedBox(height: 20),
                 Wrap(
                   spacing: 8,

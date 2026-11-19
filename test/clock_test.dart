@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hear_clock/clock_face.dart';
+import 'package:hear_clock/clock_palette.dart';
 import 'package:hear_clock/clock_settings.dart';
 import 'package:hear_clock/main.dart';
 
@@ -160,6 +161,53 @@ void main() {
     expect(invalid.dial.hour.length, 40);
   });
 
+  test('color combinations change only the current face colors', () {
+    final original = ClockSettings.fromMap({
+      'font': 'serif',
+      'hour.length': 45,
+      'minute.weight': 'bold',
+      'dial.seconds': true,
+      'format': 'h24',
+      'speech.rate': 150,
+      'stack.digits': 0xfedcba,
+    });
+    for (final variant in FaceVariant.values) {
+      final prior = original.copyWith(variant: variant);
+      for (final palette in ClockPalette.values) {
+        final changed = palette.apply(prior);
+        expect(ClockPalette.current(changed), palette);
+        expect(changed.contrast, greaterThan(7));
+        expect(changed.format, ClockFormat.h24);
+        expect(changed.speechRate, 150);
+        expect(changed.digital.font, DigitFont.serif);
+        expect(changed.dial.hour.length, 45);
+        expect(changed.dial.minute.weight, HandWeight.bold);
+        expect(changed.dial.seconds, isTrue);
+        if (variant != FaceVariant.stacked) {
+          expect(changed.stacked, same(prior.stacked));
+        }
+        if (variant != FaceVariant.digital) {
+          expect(changed.digital, same(prior.digital));
+        }
+        if (variant != FaceVariant.analog) {
+          expect(changed.dial, same(prior.dial));
+        }
+        expect(
+          ClockPalette.current(ClockSettings.fromMap(changed.toMap())),
+          palette,
+        );
+      }
+    }
+    final unreadable = ClockSettings.fromMap({
+      'variant': 'analog',
+      'dial.face': 0,
+      'minute.color': 0,
+      'second.color': 0,
+    });
+    expect(unreadable.lowestContrast, (part: 'minute hand', ratio: 1.0));
+    expect(ClockPalette.current(unreadable), isNull);
+  });
+
   testWidgets('switching faces preserves each set of digits after saving', (
     tester,
   ) async {
@@ -251,6 +299,8 @@ void main() {
       await tester.pumpAndSettle();
       final clock = find.bySemanticsLabel('Hear the time');
       expect(clock, findsOneWidget);
+      expect(platform.readings, isEmpty);
+      await tester.pump(const Duration(minutes: 1));
       expect(platform.readings, isEmpty);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
