@@ -184,21 +184,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           dial: dial.withHand(selected, hand.copyWith(color: c)),
         ),
       ),
-      Text(
-        '$title length, ${hand.length}%',
-        style: const TextStyle(fontSize: 18),
-      ),
-      Semantics(
+      _PercentageSlider(
         label: '$title length',
-        child: Slider(
-          min: 35,
-          max: 95,
-          divisions: 12,
-          value: hand.length.toDouble(),
-          semanticFormatterCallback: (v) => '${v.round()} percent',
-          onChanged: (v) =>
-              update(dial.withHand(selected, hand.copyWith(length: v.round()))),
-        ),
+        value: hand.length,
+        min: 35,
+        max: 95,
+        divisions: 12,
+        onChanged: (v) =>
+            update(dial.withHand(selected, hand.copyWith(length: v))),
       ),
       _Choices<HandWeight>(
         label: '$title thickness',
@@ -283,22 +276,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _pickLanguage,
               ),
-              Text(
-                'Speech speed, ${_draft.speechRate}%',
-                style: const TextStyle(fontSize: 18),
-              ),
-              Semantics(
+              _PercentageSlider(
                 label: 'Speech speed',
-                child: Slider(
-                  min: 50,
-                  max: 200,
-                  divisions: 6,
-                  value: _draft.speechRate.toDouble(),
-                  semanticFormatterCallback: (v) => '${v.round()} percent',
-                  onChanged: (v) => setState(
-                    () => _draft = _draft.copyWith(speechRate: v.round()),
-                  ),
-                ),
+                value: _draft.speechRate,
+                min: 50,
+                max: 200,
+                divisions: 6,
+                onChanged: (v) =>
+                    setState(() => _draft = _draft.copyWith(speechRate: v)),
               ),
               Align(
                 alignment: AlignmentDirectional.centerStart,
@@ -341,6 +326,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
       label: _saving ? 'Saving…' : 'Save settings',
       onTap: _saving ? null : _save,
       error: _error,
+    ),
+  );
+}
+
+class _PercentageSlider extends StatelessWidget {
+  const _PercentageSlider({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.onChanged,
+  });
+  final String label;
+  final int value, min, max, divisions;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) => MergeSemantics(
+    child: Semantics(
+      label: label,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ExcludeSemantics(
+            child: Text(
+              '$label, $value%',
+              style: const TextStyle(fontSize: 18),
+            ),
+          ),
+          Slider(
+            min: min.toDouble(),
+            max: max.toDouble(),
+            divisions: divisions,
+            value: value.toDouble(),
+            semanticFormatterCallback: (v) => '${v.round()} percent',
+            onChanged: (v) => onChanged(v.round()),
+          ),
+        ],
+      ),
     ),
   );
 }

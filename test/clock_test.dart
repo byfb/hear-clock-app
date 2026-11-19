@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -211,6 +213,13 @@ void main() {
       100,
       scrollable: find.byType(Scrollable).last,
     );
+    expect(
+      tester
+          .getSemantics(find.bySemanticsLabel('Second hand length'))
+          .getSemanticsData()
+          .hasAction(SemanticsAction.increase),
+      isTrue,
+    );
     tester.widget<Slider>(length).onChanged!(65);
     await tester.pump();
     await _tap(tester, 'Bold');
@@ -307,6 +316,13 @@ void main() {
       await _tap(tester, 'Speech language');
       await _tap(tester, 'French (France)');
       await tester.ensureVisible(find.byType(Slider));
+      expect(
+        tester
+            .getSemantics(find.bySemanticsLabel('Speech speed'))
+            .getSemanticsData()
+            .hasAction(SemanticsAction.decrease),
+        isTrue,
+      );
       tester.widget<Slider>(find.byType(Slider)).onChanged!(75);
       await tester.pump();
       await _tap(tester, 'Test voice');
