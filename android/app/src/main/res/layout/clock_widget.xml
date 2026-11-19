@@ -1,16 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextClock xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_clock"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_surface"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:autoSizeMaxTextSize="400dp"
-    android:autoSizeMinTextSize="8dp"
-    android:autoSizeStepGranularity="1dp"
-    android:autoSizeTextType="uniform"
     android:background="@color/clock_face"
-    android:fontFamily="monospace"
-    android:gravity="center"
-    android:includeFontPadding="false"
-    android:maxLines="1"
-    android:padding="6dp"
-    android:textColor="@color/clock_digits" />
+    android:importantForAccessibility="no">
+    <LinearLayout
+        android:id="@+id/digit_width"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:weightSum="1.1"
+        android:importantForAccessibility="noHideDescendants">
+        <LinearLayout
+            android:id="@+id/digit_height"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:weightSum="1.1">
+            <TextClock android:id="@+id/digital_digits" style="@style/WidgetDigits" />
+            <TextClock android:id="@+id/stack_hour" style="@style/WidgetDigits"
+                android:layout_weight=".5" android:visibility="gone" />
+            <TextClock android:id="@+id/stack_minute" style="@style/WidgetDigits"
+                android:layout_weight=".5" android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+    <TextClock android:id="@+id/widget_clock" style="@style/ClockAction" />
+</FrameLayout>
