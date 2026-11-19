@@ -4,7 +4,7 @@ A customizable talking clock for Android 8.0 and later. Tap anywhere on the cloc
 
 ## Make the clock yours
 
-Open **Settings** and choose a clock face. Each face remembers its own appearance.
+Open **Settings → Appearance** and choose a clock face. Each face remembers its own appearance. The app’s menus follow Android’s light or dark theme.
 
 | Face | What you can change |
 | --- | --- |
@@ -14,7 +14,9 @@ Open **Settings** and choose a clock face. Each face remembers its own appearanc
 
 Open **Color combinations** for white on black, black on white, yellow on black, or the face’s original colors. A combination changes only that face’s colors. You can also change individual colors by name or hex value. The preview identifies the lowest-contrast digits, markings, or hand when the contrast ratio falls below 4.5:1. **Time format** applies across the faces and to speech. **Device** follows the phone’s 12-hour or 24-hour preference.
 
-Under **Speech language**, choose a language offered by your Android text-to-speech engine. Set **Speech speed** between 50% and 200% and tap **Test voice** to hear the change. **Save settings** applies your choices to the app and every placed widget. **Restore defaults** followed by **Save settings** restores the original appearance and voice settings.
+In **Settings → Voice**, choose a language offered by your Android text-to-speech engine. Set **Speech speed** between 50% and 200% and tap **Test voice** to hear the change. **Save settings** applies the choices from both tabs to the app and every placed widget. **Restore all defaults** in Appearance followed by **Save settings** restores the original appearance and voice settings.
+
+The design draws on studies with blind and low-vision phone users. [Read the accessibility research and participant testing questions](docs/accessibility-research.md).
 
 ## Add it to the home screen
 

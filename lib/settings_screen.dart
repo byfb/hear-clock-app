@@ -232,116 +232,144 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Widget _appearance() => ListView(
+    key: const PageStorageKey('appearance'),
+    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+    children: [
+      ClockFace(compact: true, settings: _draft, platform: widget.platform),
+      _Choices<FaceVariant>(
+        label: 'Clock face',
+        values: FaceVariant.values,
+        selected: _draft.variant,
+        name: (v) => v.label,
+        onChange: (v) => setState(() => _draft = _draft.copyWith(variant: v)),
+      ),
+      const SizedBox(height: 12),
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.contrast),
+        title: const Text('Color combinations'),
+        subtitle: Text(ClockPalette.current(_draft)?.label ?? 'Custom colors'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: _pickPalette,
+      ),
+      const Divider(height: 1),
+      ContrastNote(_draft),
+      if (_draft.variant == FaceVariant.analog)
+        ..._dialControls()
+      else
+        ..._digitControls(),
+      const Divider(height: 1),
+      _Choices<ClockFormat>(
+        label: 'Time format',
+        values: ClockFormat.values,
+        selected: _draft.format,
+        name: (v) => v.label,
+        onChange: (v) => setState(() => _draft = _draft.copyWith(format: v)),
+      ),
+      const Divider(height: 24),
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: TextButton(
+          onPressed: () => setState(() => _draft = const ClockSettings()),
+          child: const Text('Restore all defaults'),
+        ),
+      ),
+    ],
+  );
+
+  Future<void> _testVoice() async {
+    try {
+      await widget.platform.speak(_draft);
+    } on PlatformException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error.message ?? 'Check your Android text-to-speech voice.',
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _voice() => ListView(
+    key: const PageStorageKey('voice'),
+    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+    children: [
+      ListTile(
+        title: const Text('Speech language'),
+        subtitle: Text(_draft.language.label),
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: _pickLanguage,
+      ),
+      const Divider(height: 1),
+      const SizedBox(height: 24),
+      _PercentageSlider(
+        label: 'Speech speed',
+        value: _draft.speechRate,
+        min: 50,
+        max: 200,
+        divisions: 6,
+        onChanged: (v) =>
+            setState(() => _draft = _draft.copyWith(speechRate: v)),
+      ),
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: OutlinedButton.icon(
+          icon: const Icon(Icons.volume_up_outlined),
+          label: const Text('Test voice'),
+          onPressed: _testVoice,
+        ),
+      ),
+    ],
+  );
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: ClockTheme.settingsBar(context, 'Clock settings'),
-    body: SafeArea(
-      top: false,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-            children: [
-              ClockFace(
-                compact: true,
-                settings: _draft,
-                platform: widget.platform,
-              ),
-              _Choices<FaceVariant>(
-                label: 'Clock face',
-                values: FaceVariant.values,
-                selected: _draft.variant,
-                name: (v) => v.label,
-                onChange: (v) =>
-                    setState(() => _draft = _draft.copyWith(variant: v)),
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.contrast),
-                title: const Text('Color combinations'),
-                subtitle: Text(
-                  ClockPalette.current(_draft)?.label ?? 'Custom colors',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _pickPalette,
-              ),
-              const Divider(height: 1),
-              ContrastNote(_draft),
-              if (_draft.variant == FaceVariant.analog)
-                ..._dialControls()
-              else
-                ..._digitControls(),
-              const Divider(height: 1),
-              _Choices<ClockFormat>(
-                label: 'Time format',
-                values: ClockFormat.values,
-                selected: _draft.format,
-                name: (v) => v.label,
-                onChange: (v) =>
-                    setState(() => _draft = _draft.copyWith(format: v)),
-              ),
-              const Divider(height: 24),
-              ListTile(
-                title: const Text('Speech language'),
-                subtitle: Text(_draft.language.label),
-                contentPadding: EdgeInsets.zero,
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _pickLanguage,
-              ),
-              _PercentageSlider(
-                label: 'Speech speed',
-                value: _draft.speechRate,
-                min: 50,
-                max: 200,
-                divisions: 6,
-                onChanged: (v) =>
-                    setState(() => _draft = _draft.copyWith(speechRate: v)),
-              ),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: TextButton.icon(
-                  icon: const Icon(Icons.volume_up_outlined),
-                  label: const Text('Test voice'),
-                  onPressed: () async {
-                    try {
-                      await widget.platform.speak(_draft);
-                    } on PlatformException catch (error) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              error.message ??
-                                  'Check your Android text-to-speech voice.',
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: TextButton(
-                  onPressed: () =>
-                      setState(() => _draft = const ClockSettings()),
-                  child: const Text('Restore defaults'),
-                ),
-              ),
+  Widget build(BuildContext context) {
+    final tabHeight = (MediaQuery.textScalerOf(context).scale(16) * 1.6 + 14)
+        .clamp(50.0, double.infinity);
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: ClockTheme.settingsBar(
+          context,
+          'Clock settings',
+          bottom: TabBar(
+            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+            labelStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(context)
+                .colorScheme
+                .onSurfaceVariant,
+            tabs: [
+              Tab(height: tabHeight, text: 'Appearance'),
+              Tab(height: tabHeight, text: 'Voice'),
             ],
           ),
         ),
+        body: SafeArea(
+          top: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: TabBarView(children: [_appearance(), _voice()]),
+            ),
+          ),
+        ),
+        bottomNavigationBar: _SaveBar(
+          label: _saving ? 'Saving…' : 'Save settings',
+          onTap: _saving ? null : _save,
+          error: _error,
+        ),
       ),
-    ),
-    bottomNavigationBar: _SaveBar(
-      label: _saving ? 'Saving…' : 'Save settings',
-      onTap: _saving ? null : _save,
-      error: _error,
-    ),
-  );
+    );
+  }
 }
 
 class _PercentageSlider extends StatelessWidget {

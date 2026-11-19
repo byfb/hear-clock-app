@@ -391,6 +391,7 @@ void main() {
       await tester.pumpWidget(HearClockApp(platform: platform));
       await tester.pumpAndSettle();
       await _tap(tester, 'Settings');
+      await _tap(tester, 'Voice');
       await _tap(tester, 'Speech language');
       await _tap(tester, 'French (France)');
       await tester.ensureVisible(find.byType(Slider));
@@ -432,6 +433,39 @@ void main() {
     expect(find.textContaining('Low contrast'), findsOneWidget);
     await _tap(tester, 'Save settings');
     expect(rgb(platform.saved.face), 0xffffff);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('presets and voice share a draft at 200 percent text size', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final platform = _Platform();
+    await tester.pumpWidget(HearClockApp(platform: platform));
+    await tester.pumpAndSettle();
+    await _tap(tester, 'Settings');
+    await _tap(tester, 'Color combinations');
+    await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+    await _tap(tester, 'Black on white');
+    await _tap(tester, 'Voice');
+    await _tap(tester, 'Speech language');
+    await _tap(tester, 'French (France)');
+    await _tap(tester, 'Test voice');
+    expect(platform.readings.single.language.tag, 'fr-FR');
+    expect(
+      ClockPalette.current(platform.readings.single),
+      ClockPalette.blackOnWhite,
+    );
+    expect(ClockPalette.current(platform.saved), ClockPalette.original);
+    await _tap(tester, 'Appearance');
+    await _tap(tester, 'Save settings');
+    expect(platform.saved.language.tag, 'fr-FR');
+    expect(ClockPalette.current(platform.saved), ClockPalette.blackOnWhite);
     expect(tester.takeException(), isNull);
   });
 
