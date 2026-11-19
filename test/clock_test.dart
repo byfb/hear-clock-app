@@ -125,6 +125,74 @@ void main() {
   );
 
   testWidgets(
+    'custom colors and typography save together and survive reopening the app',
+    (tester) async {
+      final platform = _Platform();
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Settings');
+      await _tap(tester, 'Digit color');
+      await tester.enterText(find.byType(TextField), 'XYZ');
+      await _tap(tester, 'Use color');
+      expect(find.textContaining('Enter six hex digits'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), '#f1c04a');
+      await _tap(tester, 'Use color');
+      await _tap(tester, 'Background color');
+      await _tap(tester, 'Navy');
+      await _tap(tester, 'Use color');
+      await _tap(tester, 'Small');
+      await _tap(tester, 'Serif');
+      await _tap(tester, 'Bold digits');
+      await tester.scrollUntilVisible(
+        find.text('24-hour'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await _tap(tester, '24-hour');
+      expect(platform.saved.toMap(), const ClockSettings().toMap());
+      await _tap(tester, 'Save settings');
+      final expected = {
+        'digits': 0xf1c04a,
+        'face': 0x102946,
+        'font': 'serif',
+        'size': 'small',
+        'bold': true,
+        'format': 'h24',
+      };
+      expect(platform.saved.toMap(), expected);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<ClockFace>(find.byType(ClockFace)).settings.toMap(),
+        expected,
+      );
+    },
+  );
+
+  testWidgets('large system text leaves settings usable on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final platform = _Platform();
+    await tester.pumpWidget(HearClockApp(platform: platform));
+    await tester.pumpAndSettle();
+    await _tap(tester, 'Settings');
+    await _tap(tester, 'Background color');
+    await _tap(tester, 'White');
+    await _tap(tester, 'Use color');
+    expect(find.textContaining('Low contrast'), findsOneWidget);
+    await _tap(tester, 'Save settings');
+    expect(rgb(platform.saved.face), 0xffffff);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
     'launcher instructions remain reachable when pinning is unavailable',
     (tester) async {
       final platform = _Platform();

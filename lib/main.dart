@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'clock_face.dart';
 import 'clock_settings.dart';
 import 'clock_theme.dart';
+import 'settings_screen.dart';
 
 void main() => runApp(const HearClockApp());
 
@@ -46,6 +47,21 @@ class _HomeState extends State<_Home> {
     } on PlatformException {
       if (mounted) setState(() => _loadFailed = true);
     }
+  }
+
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => SettingsScreen(
+          initial: _settings!,
+          platform: widget.platform,
+          onSave: (value) async {
+            await widget.platform.save(value);
+            if (mounted) setState(() => _settings = value);
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _addWidget() async {
@@ -119,6 +135,13 @@ class _HomeState extends State<_Home> {
                                   ),
                                 ),
                               ],
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: settings == null
+                                  ? null
+                                  : _openSettings,
+                              icon: const Icon(Icons.tune, size: 20),
+                              label: const Text('Settings'),
                             ),
                           ],
                         ),
