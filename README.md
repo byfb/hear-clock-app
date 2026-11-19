@@ -43,6 +43,8 @@ flutter test
 flutter build apk --release
 ```
 
+To check widget resizing and the full-face tap target, connect an Android 15 test emulator and run `./gradlew :app:connectedDebugAndroidTest` from the `android` directory.
+
 The local test APK is written to `build/app/outputs/flutter-apk/app-release.apk` and uses the Android debug signing key by default. To sign a local build with the release key, set `HEAR_CLOCK_KEYSTORE` to the absolute path of the PKCS12 keystore and `HEAR_CLOCK_KEYSTORE_PASSWORD` to its password. The key alias is `hear-clock`. The public certificate fingerprint is in [android/release-cert.sha256](android/release-cert.sha256).
 
 ## Create a versioned release

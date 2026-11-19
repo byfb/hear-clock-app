@@ -9,8 +9,8 @@ import android.text.Spanned
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.text.style.TypefaceSpan
+import android.view.View
 import android.widget.RemoteViews
-import kotlin.math.roundToInt
 
 internal class WidgetFaces(private val context: Context, private val settings: ClockSettings) {
     private val dial = if (settings.variant == "analog") DialArtwork(settings) else null
@@ -19,43 +19,48 @@ internal class WidgetFaces(private val context: Context, private val settings: C
         Intent(context, ClockWidget::class.java).setAction(ClockWidget.SPEAK),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
-    fun views(width: Float, height: Float): RemoteViews {
-        val layout = when (settings.variant) {
-            "stacked" -> R.layout.clock_stacked
-            "analog" -> R.layout.clock_analog
-            else -> R.layout.clock_widget
+    fun views(): RemoteViews {
+        val (layout, fraction) = when {
+            dial != null -> R.layout.clock_analog to 1f
+            settings.size == "small" -> R.layout.clock_widget_small to .56f
+            settings.size == "medium" -> R.layout.clock_widget_medium to .74f
+            else -> R.layout.clock_widget to .91f
         }
         val view = RemoteViews(context.packageName, layout)
-        val surface = if (settings.variant == "digital") R.id.widget_clock else R.id.widget_surface
-        view.setInt(surface, "setBackgroundColor", settings.face)
+        view.setInt(R.id.widget_surface, "setBackgroundColor", settings.face)
+        view.setOnClickPendingIntent(R.id.widget_surface, speak)
         val short = settings.pattern(locale, false)
         val long = settings.pattern(locale, true)
         // The transparent TextClock over a composed face is its one live, accessible action.
         view.setCharSequence(R.id.widget_clock, "setFormat12Hour", short)
         view.setCharSequence(R.id.widget_clock, "setFormat24Hour", long)
         view.setOnClickPendingIntent(R.id.widget_clock, speak)
-        when (settings.variant) {
-            "analog" -> dial!!.apply(view)
-            "stacked" -> {
-                styleLine(view, R.id.stack_hour, settings.pattern(locale, false, true),
-                    settings.pattern(locale, true, true), settings.digits, width, height / 2)
-                styleLine(view, R.id.stack_minute, "mm", "mm", settings.minutes, width, height / 2)
-            }
-            else -> styleLine(view, R.id.widget_clock, short, long, settings.digits, width, height)
+        if (dial != null) {
+            dial.apply(view)
+            return view
+        }
+        // Let the host measure the digits against the space it actually gives this widget.
+        view.setFloat(R.id.digit_width, "setWeightSum", 1f / fraction)
+        view.setFloat(R.id.digit_height, "setWeightSum", 1f / fraction)
+        val stacked = settings.variant == "stacked"
+        view.setViewVisibility(R.id.digital_digits, if (stacked) View.GONE else View.VISIBLE)
+        view.setViewVisibility(R.id.stack_hour, if (stacked) View.VISIBLE else View.GONE)
+        view.setViewVisibility(R.id.stack_minute, if (stacked) View.VISIBLE else View.GONE)
+        if (stacked) {
+            styleLine(view, R.id.stack_hour, settings.pattern(locale, false, true),
+                settings.pattern(locale, true, true), settings.digits)
+            styleLine(view, R.id.stack_minute, "mm", "mm", settings.minutes)
+        } else {
+            styleLine(view, R.id.digital_digits, short, long, settings.digits)
         }
         return view
     }
 
     private fun styleLine(view: RemoteViews, id: Int, short: String, long: String,
-        color: Int, width: Float, height: Float) {
+        color: Int) {
         view.setCharSequence(id, "setFormat12Hour", styled(short))
         view.setCharSequence(id, "setFormat24Hour", styled(long))
         view.setTextColor(id, color)
-        val inset = when (settings.size) { "small" -> .22f; "medium" -> .13f; else -> .045f }
-        val density = context.resources.displayMetrics.density
-        val x = (width * inset * density).roundToInt()
-        val y = (height * inset * density).roundToInt()
-        view.setViewPadding(id, x, y, x, y)
     }
 
     private fun styled(pattern: String) = SpannableString(pattern).apply {

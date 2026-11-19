@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A new size needs a new host measurement. LinearLayout.setWeightSum does not request one. -->
+    <item type="layout" name="clock_widget_small">@layout/clock_widget</item>
+    <item type="layout" name="clock_widget_medium">@layout/clock_widget</item>
+</resources>
