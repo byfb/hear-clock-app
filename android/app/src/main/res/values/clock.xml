@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Hear Clock</string>
+    <string name="voice_unavailable">This speech language is unavailable. Choose an installed voice in Clock settings.</string>
     <string name="widget_description">Tap to hear the local time. Touch and hold to resize.</string>
     <string name="speech_error">Couldn’t read the time. Check your Android text-to-speech voice and try again.</string>
     <color name="clock_face">#22221F</color>

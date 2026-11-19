@@ -5,6 +5,7 @@ import 'clock_face.dart';
 import 'clock_settings.dart';
 import 'clock_theme.dart';
 import 'color_screen.dart';
+import 'speech_language_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
@@ -62,6 +63,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? _draft.copyWith(digits: color)
           : _draft.copyWith(face: color),
     );
+  }
+
+  Future<void> _pickLanguage() async {
+    final language = await Navigator.push<SpeechLanguage>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SpeechLanguageScreen(
+          platform: widget.platform,
+          selected: _draft.language,
+        ),
+      ),
+    );
+    if (mounted && language != null) {
+      setState(() => _draft = _draft.copyWith(language: language));
+    }
   }
 
   @override
@@ -135,6 +151,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 name: (v) => v.label,
                 onChange: (v) =>
                     setState(() => _draft = _draft.copyWith(format: v)),
+              ),
+              const Divider(height: 24),
+              ListTile(
+                title: const Text('Speech language'),
+                subtitle: Text(_draft.language.label),
+                contentPadding: EdgeInsets.zero,
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _pickLanguage,
+              ),
+              Text(
+                'Speech speed, ${_draft.speechRate}%',
+                style: const TextStyle(fontSize: 18),
+              ),
+              Semantics(
+                label: 'Speech speed',
+                child: Slider(
+                  min: 50,
+                  max: 200,
+                  divisions: 6,
+                  value: _draft.speechRate.toDouble(),
+                  semanticFormatterCallback: (v) => '${v.round()} percent',
+                  onChanged: (v) => setState(
+                    () => _draft = _draft.copyWith(speechRate: v.round()),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.volume_up_outlined),
+                  label: const Text('Test voice'),
+                  onPressed: () async {
+                    try {
+                      await widget.platform.speak(_draft);
+                    } on PlatformException catch (error) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              error.message ??
+                                  'Check your Android text-to-speech voice.',
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
               ),
               const SizedBox(height: 10),
               Align(

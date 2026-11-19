@@ -23,9 +23,17 @@ class MainActivity : FlutterActivity() {
                             result.success(null)
                         }
                     }
-                    "speak" -> TimeSpeaker.read(this, call.arguments as? String) { spoken ->
-                        if (spoken) result.success(null)
-                        else result.error("speech", getString(R.string.speech_error), null)
+                    "languages" -> TimeSpeaker.languages(this) { languages ->
+                        if (languages != null) result.success(languages)
+                        else result.error("languages", getString(R.string.speech_error), null)
+                    }
+                    "speak" -> {
+                        val preview = call.arguments as? Map<*, *>
+                        val settings = preview?.let { ClockSettings.from(it) } ?: ClockSettings.load(this)
+                        TimeSpeaker.read(this, settings) { error ->
+                            if (error == null) result.success(null)
+                            else result.error("speech", getString(error), null)
+                        }
                     }
                     "pinWidget" -> {
                         val manager = AppWidgetManager.getInstance(this)

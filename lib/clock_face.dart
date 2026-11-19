@@ -91,7 +91,7 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
     final request = ++_request;
     setState(() => _speaking = true);
     try {
-      await widget.platform.speak(widget.settings.format);
+      await widget.platform.speak(widget.settings);
     } on PlatformException catch (error) {
       if (mounted && request == _request) {
         ScaffoldMessenger.of(context)

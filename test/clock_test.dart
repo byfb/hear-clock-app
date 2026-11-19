@@ -7,7 +7,7 @@ import 'package:hear_clock/main.dart';
 
 class _Platform extends ClockPlatform {
   ClockSettings saved = const ClockSettings();
-  final readings = <ClockFormat>[];
+  final readings = <ClockSettings>[];
   var failSpeech = false;
   var pins = 0;
 
@@ -16,15 +16,20 @@ class _Platform extends ClockPlatform {
   @override
   Future<void> save(ClockSettings settings) async => saved = settings;
   @override
-  Future<void> speak(ClockFormat format) async {
+  Future<void> speak(ClockSettings settings) async {
     if (failSpeech) {
       throw PlatformException(
         code: 'speech',
         message: 'Check your text-to-speech voice.',
       );
     }
-    readings.add(format);
+    readings.add(settings);
   }
+
+  @override
+  Future<List<SpeechLanguage>> languages() async => [
+    const SpeechLanguage('fr-FR', 'French (France)'),
+  ];
 
   @override
   Future<bool> pinWidget() async {
@@ -91,6 +96,7 @@ void main() {
         'bold': true,
       });
       expect(settings.toMap(), {
+        ...const ClockSettings().toMap(),
         'digits': 0,
         'face': 0x12ab34,
         'font': 'serif',
@@ -116,7 +122,7 @@ void main() {
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       await tester.tap(clock);
       await tester.pumpAndSettle();
-      expect(platform.readings, [ClockFormat.device]);
+      expect(platform.readings.single.format, ClockFormat.device);
       platform.failSpeech = true;
       await tester.tap(clock);
       await tester.pumpAndSettle();
@@ -152,6 +158,7 @@ void main() {
       expect(platform.saved.toMap(), const ClockSettings().toMap());
       await _tap(tester, 'Save settings');
       final expected = {
+        ...const ClockSettings().toMap(),
         'digits': 0xf1c04a,
         'face': 0x102946,
         'font': 'serif',
@@ -167,6 +174,28 @@ void main() {
         tester.widget<ClockFace>(find.byType(ClockFace)).settings.toMap(),
         expected,
       );
+    },
+  );
+
+  testWidgets(
+    'a voice preview uses the draft language and speed before saving',
+    (tester) async {
+      final platform = _Platform();
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Settings');
+      await _tap(tester, 'Speech language');
+      await _tap(tester, 'French (France)');
+      await tester.ensureVisible(find.byType(Slider));
+      tester.widget<Slider>(find.byType(Slider)).onChanged!(75);
+      await tester.pump();
+      await _tap(tester, 'Test voice');
+      expect(platform.readings.last.language.tag, 'fr-FR');
+      expect(platform.readings.last.speechRate, 75);
+      expect(platform.saved.language.tag, isEmpty);
+      await _tap(tester, 'Save settings');
+      expect(platform.saved.toMap()['speech.rate'], 75);
+      expect(platform.saved.toMap()['speech.language'], 'fr-FR');
     },
   );
 

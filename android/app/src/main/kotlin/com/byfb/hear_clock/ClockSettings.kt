@@ -11,10 +11,14 @@ internal data class ClockSettings(
     val size: String,
     val bold: Boolean,
     val format: String,
+    val language: String,
+    val speechRate: Int,
 ) {
     fun toMap(): Map<String, Any> = mapOf(
         "digits" to digits, "face" to face, "font" to font,
         "size" to size, "bold" to bold, "format" to format,
+        "speech.language" to language, "speech.rate" to speechRate,
+        "speech.label" to Locale.forLanguageTag(language).displayName,
     )
 
     fun save(context: Context) {
@@ -22,6 +26,7 @@ internal data class ClockSettings(
             .putInt("digits", digits).putInt("face", face)
             .putString("font", font).putString("size", size)
             .putBoolean("bold", bold).putString("format", format)
+            .putString("speech.language", language).putInt("speech.rate", speechRate)
             .apply()
     }
 
@@ -56,6 +61,8 @@ internal data class ClockSettings(
                 size = choice("size", "large", "small", "medium", "large"),
                 bold = values["bold"] as? Boolean ?: false,
                 format = choice("format", "device", "device", "h12", "h24"),
+                language = values["speech.language"] as? String ?: "",
+                speechRate = (values["speech.rate"] as? Number)?.toInt()?.takeIf { it in 50..200 } ?: 100,
             )
         }
     }

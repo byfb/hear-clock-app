@@ -53,6 +53,14 @@ final namedColors = Map<Color, String>.unmodifiable({
 String colorName(Color color) => namedColors[color] ?? '#${hexColor(color)}';
 
 @immutable
+class SpeechLanguage {
+  const SpeechLanguage(this.tag, this.label);
+  static const device = SpeechLanguage('', 'Device language');
+  final String tag;
+  final String label;
+}
+
+@immutable
 class ClockSettings {
   const ClockSettings({
     this.digits = ClockTheme.digits,
@@ -61,6 +69,8 @@ class ClockSettings {
     this.size = DigitSize.large,
     this.bold = false,
     this.format = ClockFormat.device,
+    this.language = SpeechLanguage.device,
+    this.speechRate = 100,
   });
 
   final Color digits;
@@ -69,6 +79,8 @@ class ClockSettings {
   final DigitSize size;
   final bool bold;
   final ClockFormat format;
+  final SpeechLanguage language;
+  final int speechRate;
 
   factory ClockSettings.fromMap(Map<Object?, Object?> map) {
     const defaults = ClockSettings();
@@ -81,6 +93,9 @@ class ClockSettings {
 
     T choice<T extends Enum>(String key, List<T> values, T fallback) =>
         values.where((v) => v.name == map[key]).firstOrNull ?? fallback;
+    final tag = map['speech.language'];
+    final label = map['speech.label'];
+    final rate = map['speech.rate'];
     return ClockSettings(
       digits: color('digits', defaults.digits),
       face: color('face', defaults.face),
@@ -88,6 +103,13 @@ class ClockSettings {
       size: choice('size', DigitSize.values, defaults.size),
       bold: map['bold'] == true,
       format: choice('format', ClockFormat.values, defaults.format),
+      language: tag is String && tag.isNotEmpty
+          ? SpeechLanguage(
+              tag,
+              label is String && label.isNotEmpty ? label : tag,
+            )
+          : SpeechLanguage.device,
+      speechRate: rate is int && rate >= 50 && rate <= 200 ? rate : 100,
     );
   }
 
@@ -98,6 +120,8 @@ class ClockSettings {
     'size': size.name,
     'bold': bold,
     'format': format.name,
+    'speech.language': language.tag,
+    'speech.rate': speechRate,
   };
 
   ClockSettings copyWith({
@@ -107,6 +131,8 @@ class ClockSettings {
     DigitSize? size,
     bool? bold,
     ClockFormat? format,
+    SpeechLanguage? language,
+    int? speechRate,
   }) => ClockSettings(
     digits: digits ?? this.digits,
     face: face ?? this.face,
@@ -114,6 +140,8 @@ class ClockSettings {
     size: size ?? this.size,
     bold: bold ?? this.bold,
     format: format ?? this.format,
+    language: language ?? this.language,
+    speechRate: speechRate ?? this.speechRate,
   );
 
   double get contrast {
@@ -131,8 +159,17 @@ class ClockPlatform {
   );
   Future<void> save(ClockSettings settings) =>
       _channel.invokeMethod('save', settings.toMap());
-  Future<void> speak(ClockFormat format) =>
-      _channel.invokeMethod('speak', format.name);
+  Future<void> speak(ClockSettings settings) =>
+      _channel.invokeMethod('speak', settings.toMap());
+  Future<List<SpeechLanguage>> languages() async {
+    final items = await _channel.invokeListMethod<Object?>('languages') ?? [];
+    return [
+      for (final item in items)
+        if (item case {'tag': final String tag, 'label': final String label})
+          SpeechLanguage(tag, label),
+    ];
+  }
+
   Future<bool> pinWidget() async =>
       await _channel.invokeMethod<bool>('pinWidget') ?? false;
 }

@@ -26,8 +26,8 @@ class ClockWidget : AppWidgetProvider() {
             return
         }
         val pending = goAsync()
-        TimeSpeaker.read(context) { spoken ->
-            if (!spoken) Toast.makeText(context, R.string.speech_error, Toast.LENGTH_LONG).show()
+        TimeSpeaker.read(context) { error ->
+            if (error != null) Toast.makeText(context, error, Toast.LENGTH_LONG).show()
             pending.finish()
         }
     }
