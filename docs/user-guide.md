@@ -10,6 +10,12 @@ Tap anywhere on the clock to hear the time. The home screen stays open. With Tal
 
 If a widget you already placed is blank after an update, open Hear Clock once and return to the home screen. [Widget fix in v0.3.2](releases/v0.3.2.md)
 
+## Change the app language
+
+Under **Settings → Appearance → App language**, choose English, 简体中文, 繁體中文, or **Follow device language**. The menus and TalkBack labels change immediately. On Android 13 or later you can also use Android’s app language settings. The home-screen clock uses your phone’s regional time format.
+
+To change the language you hear, use **Settings → Voice → Speech language**. **Device language** uses the phone’s language even when the menus are in another language.
+
 ## Choose a clock face
 
 Open **Settings**, then **Appearance**. Each face remembers its own settings. The menus follow your phone’s light or dark theme.

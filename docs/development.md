@@ -25,6 +25,10 @@ To test widget resizing and the full-face tap target, connect an Android 15 test
 
 The local APK is written to `build/app/outputs/flutter-apk/app-release.apk` and uses the Android debug signing key by default. For a release-signed local build, set `HEAR_CLOCK_KEYSTORE` to the absolute path of the PKCS12 keystore and `HEAR_CLOCK_KEYSTORE_PASSWORD` to its password. The key alias is `hear-clock`. [Release certificate fingerprint](../android/release-cert.sha256)
 
+## Update translations
+
+Edit the message catalogs in [lib/l10n](../lib/l10n/). `app_en.arb` defines the message keys and placeholders, `app_zh.arb` supplies Simplified Chinese, and `app_zh_Hant.arb` supplies Traditional Chinese. Run `flutter gen-l10n` before analyzing and testing changes. Android widget descriptions, notifications, and speech errors use the matching string resources in [res](../android/app/src/main/res/).
+
 ## Publish a release
 
 Prepare the version on the `release` branch. Use `patch` for fixes or packaging changes, `minor` for new features, and `major` for breaking changes. Each release increments the Android build number. [Versioning tool](../tool/release.dart)
