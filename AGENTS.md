@@ -12,6 +12,7 @@ Hear Clock is a Flutter app for blind and low-vision users. Its Android home-scr
 ## Working conventions
 
 - Use Flutter and Dart tooling for the app.
+- Keep local development assets in `.local/`. Strip editing metadata from artwork before committing it.
 - Make atomic Conventional Commits. Keep each behavior change and its relevant checks together.
 - For a new release, follow [Publish a release](docs/development.md#publish-a-release) to bump the semantic version and Android build number, commit the release notes, and tag the release.
 - Run `flutter analyze` and `flutter test` for app changes. Verify launcher behavior on Android when changing the widget or speech integration.
