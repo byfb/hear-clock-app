@@ -7,11 +7,14 @@ final _versionLine = RegExp(
 
 void main(List<String> args) async {
   final dryRun = args.contains('--dry-run');
-  final parts = args.where((argument) => argument != '--dry-run').toList();
+  final prepare = args.contains('--prepare');
+  final parts = args
+      .where((argument) => argument != '--dry-run' && argument != '--prepare')
+      .toList();
   if (parts.length != 1 ||
       !{'patch', 'minor', 'major'}.contains(parts.single)) {
     stderr.writeln(
-      'Usage: dart run tool/release.dart patch|minor|major [--dry-run]',
+      'Usage: dart run tool/release.dart patch|minor|major [--prepare] [--dry-run]',
     );
     exitCode = 64;
     return;
@@ -48,29 +51,29 @@ void main(List<String> args) async {
     if (artifact.existsSync()) {
       throw StateError('Release already exists at ${artifact.path}.');
     }
-    final process = await Process.start(
-      'flutter',
-      [
-        'build',
-        'apk',
-        '--release',
-        '--build-name=$next',
-        '--build-number=$nextBuild',
-      ],
-      runInShell: Platform.isWindows,
-      mode: ProcessStartMode.inheritStdio,
-    );
-    exitCode = await process.exitCode;
-    if (exitCode != 0) return;
+    if (!prepare) {
+      final process = await Process.start(
+        'flutter',
+        [
+          'build',
+          'apk',
+          '--release',
+          '--build-name=$next',
+          '--build-number=$nextBuild',
+        ],
+        runInShell: Platform.isWindows,
+        mode: ProcessStartMode.inheritStdio,
+      );
+      exitCode = await process.exitCode;
+      if (exitCode != 0) return;
+    }
     if (manifest.readAsStringSync() != source) {
       throw StateError(
         'pubspec.yaml changed during the build. Run the release again.',
       );
     }
-    final apk = File('build/app/outputs/flutter-apk/app-release.apk');
     final staging = releases.createTempSync('.staging-');
     try {
-      final stagedApk = apk.copySync('${staging.path}/app.apk');
       final stagedManifest = File('${staging.path}/pubspec.yaml')
         ..writeAsStringSync(
           source.replaceRange(
@@ -80,17 +83,25 @@ void main(List<String> args) async {
           ),
           flush: true,
         );
-      stagedApk.renameSync(artifact.path);
+      File? savedApk;
+      if (!prepare) {
+        final apk = File('build/app/outputs/flutter-apk/app-release.apk');
+        savedApk = apk
+            .copySync('${staging.path}/app.apk')
+            .renameSync(artifact.path);
+      }
       try {
         stagedManifest.renameSync(manifest.path);
       } catch (_) {
-        artifact.deleteSync();
+        savedApk?.deleteSync();
         rethrow;
       }
     } finally {
       staging.deleteSync(recursive: true);
     }
-    stdout.writeln(artifact.path);
+    stdout.writeln(
+      prepare ? 'Prepared $nextVersion for tagging.' : artifact.path,
+    );
   } catch (error) {
     stderr.writeln(error);
     exitCode = 1;
