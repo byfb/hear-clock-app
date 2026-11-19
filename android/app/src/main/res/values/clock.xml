@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hear Clock</string>
+    <string name="widget_description">Tap to hear the local time. Touch and hold to resize.</string>
+    <string name="speech_error">Couldn’t read the time. Check your Android text-to-speech voice and try again.</string>
+    <color name="clock_face">#22221F</color>
+    <color name="clock_digits">#FFF4DB</color>
+    <color name="clock_shell">#141412</color>
+    <color name="clock_accent">#FFA66B</color>
+</resources>

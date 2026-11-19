@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextClock xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_clock"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:autoSizeMaxTextSize="400dp"
+    android:autoSizeMinTextSize="8dp"
+    android:autoSizeStepGranularity="1dp"
+    android:autoSizeTextType="uniform"
+    android:background="@color/clock_face"
+    android:fontFamily="monospace"
+    android:gravity="center"
+    android:includeFontPadding="false"
+    android:maxLines="1"
+    android:padding="6dp"
+    android:textColor="@color/clock_digits" />
