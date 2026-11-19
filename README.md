@@ -16,6 +16,8 @@ Open **Color combinations** for white on black, black on white, yellow on black,
 
 In **Settings → Voice**, choose a language offered by your Android text-to-speech engine. Set **Speech speed** between 50% and 200% and tap **Test voice** to hear the change. **Save settings** applies the choices from both tabs to the app and every placed widget. **Restore all defaults** in Appearance followed by **Save settings** restores the original appearance and voice settings.
 
+See the [black-on-white digital clock](docs/previews/digital-light.png) and the [yellow-on-black analog clock](docs/previews/analog-dark.png).
+
 The design draws on studies with blind and low-vision phone users. [Read the accessibility research and participant testing questions](docs/accessibility-research.md).
 
 ## Add it to the home screen
