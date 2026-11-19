@@ -82,11 +82,12 @@ class LegacySecondsService : Service() {
         super.onCreate()
         val manager = getSystemService(NotificationManager::class.java)
         val channel = "second_hand"
-        manager.createNotificationChannel(NotificationChannel(channel, getString(R.string.second_hand), NotificationManager.IMPORTANCE_LOW))
+        val strings = AppLanguages.localized(this)
+        manager.createNotificationChannel(NotificationChannel(channel, strings.getString(R.string.second_hand), NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         // The manifest disables this service from API 31. Service types are required from API 34.
         startForeground(1, Notification.Builder(this, channel)
-            .setContentTitle(getString(R.string.app_name)).setContentText(getString(R.string.legacy_seconds))
+            .setContentTitle(getString(R.string.app_name)).setContentText(strings.getString(R.string.legacy_seconds))
             .setSmallIcon(R.drawable.clock_mark).setContentIntent(open).setOnlyAlertOnce(true).setOngoing(true).build())
         registerReceiver(visibility, IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_ON)

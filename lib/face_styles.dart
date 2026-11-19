@@ -2,62 +2,38 @@ import 'package:flutter/material.dart';
 
 import 'clock_theme.dart';
 
-enum FaceVariant {
-  digital('Digital'),
-  stacked('Stacked'),
-  analog('Analog');
-
-  const FaceVariant(this.label);
-  final String label;
-}
+enum FaceVariant { digital, stacked, analog }
 
 enum DigitFont {
-  mono('Mono', ClockTheme.mono),
-  sans('Sans serif', ClockTheme.sans),
-  serif('Serif', ClockTheme.serif);
+  mono(ClockTheme.mono),
+  sans(ClockTheme.sans),
+  serif(ClockTheme.serif);
 
-  const DigitFont(this.label, this.family);
-  final String label;
+  const DigitFont(this.family);
   final String family;
 }
 
 enum DigitSize {
-  small('Small', .56),
-  medium('Medium', .74),
-  large('Large', .91);
+  small(.56),
+  medium(.74),
+  large(.91);
 
-  const DigitSize(this.label, this.fraction);
-  final String label;
+  const DigitSize(this.fraction);
   final double fraction;
 }
 
-enum ClockHand {
-  hour('Hour hand'),
-  minute('Minute hand'),
-  second('Second hand');
-
-  const ClockHand(this.label);
-  final String label;
-}
+enum ClockHand { hour, minute, second }
 
 enum HandWeight {
-  slim('Slim', .05),
-  regular('Regular', .09),
-  bold('Bold', .14);
+  slim(.05),
+  regular(.09),
+  bold(.14);
 
-  const HandWeight(this.label, this.width);
-  final String label;
+  const HandWeight(this.width);
   final double width;
 }
 
-enum DialLabels {
-  numbers('All numbers'),
-  quarters('Quarters'),
-  ticks('Ticks');
-
-  const DialLabels(this.label);
-  final String label;
-}
+enum DialLabels { numbers, quarters, ticks }
 
 int rgb(Color color) => color.toARGB32() & 0xffffff;
 

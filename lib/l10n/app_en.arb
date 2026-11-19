@@ -1,0 +1,215 @@
+{
+  "@@locale": "en",
+  "settings": "Settings",
+  "clockSettings": "Clock settings",
+  "addWidget": "Add widget",
+  "addWidgetTitle": "Add the widget",
+  "placeWidget": "Touch and hold an empty spot on your home screen. Open Widgets, then drag Hear Clock onto the screen.",
+  "resizeWidget": "Touch and hold the widget to resize it.",
+  "done": "Done",
+  "loadError": "Couldn’t load clock settings.",
+  "retry": "Try again",
+  "loadingClock": "Loading clock",
+  "clockPreview": "Clock preview",
+  "hearTime": "Hear the time",
+  "readingTime": "Reading time…",
+  "localTime": "Local time, {time}",
+  "@localTime": {
+    "description": "Accessibility value announced when the clock receives focus.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "timeWithPeriod": "{digits} {period}",
+  "@timeWithPeriod": {
+    "description": "A 12-hour clock reading. Keep both placeholders and put the day period where a clock normally displays it in this language.",
+    "placeholders": {
+      "digits": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "speechError": "Check your Android text-to-speech voice and try again.",
+  "saveError": "Couldn’t save these settings. Try again.",
+  "appearance": "Appearance",
+  "voice": "Voice",
+  "saveSettings": "Save settings",
+  "saving": "Saving…",
+  "restoreDefaults": "Restore all defaults",
+  "appLanguage": "App language",
+  "@appLanguage": {
+    "description": "Language of the app interface, independent of the clock voice."
+  },
+  "systemLanguage": "Follow device language",
+  "languageError": "Couldn’t change the app language. Try again.",
+  "clockFace": "Clock face",
+  "digitColor": "Digit color",
+  "hourDigitColor": "Hour digit color",
+  "minuteDigitColor": "Minute digit color",
+  "backgroundColor": "Background color",
+  "digitSize": "Digit size",
+  "typeface": "Typeface",
+  "boldDigits": "Bold digits",
+  "leadingZero": "Leading zero in 12-hour time",
+  "showSeconds": "Show seconds",
+  "markingColor": "Marking color",
+  "dialMarkings": "Dial markings",
+  "showSecondHand": "Show second hand",
+  "customizeHand": "Customize a hand",
+  "handColor": "{hand} color",
+  "@handColor": {
+    "placeholders": {
+      "hand": {
+        "type": "String"
+      }
+    }
+  },
+  "handLength": "{hand} length",
+  "@handLength": {
+    "placeholders": {
+      "hand": {
+        "type": "String"
+      }
+    }
+  },
+  "handThickness": "{hand} thickness",
+  "@handThickness": {
+    "placeholders": {
+      "hand": {
+        "type": "String"
+      }
+    }
+  },
+  "colorCombinations": "Color combinations",
+  "customColors": "Custom colors",
+  "timeFormat": "Time format",
+  "speechLanguage": "Speech language",
+  "deviceLanguage": "Device language",
+  "@deviceLanguage": {
+    "description": "Voice option that reads the time in the phone’s system language."
+  },
+  "speechSpeed": "Speech speed",
+  "testVoice": "Test voice",
+  "sliderValue": "{label}, {value}%",
+  "@sliderValue": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "spokenPercent": "{value} percent",
+  "@spokenPercent": {
+    "description": "Percentage read aloud by TalkBack when adjusting a slider.",
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "hexColor": "Custom hex color",
+  "invalidHex": "Enter six hex digits, such as FFD459.",
+  "useColor": "Use color",
+  "findLanguage": "Find a language",
+  "loadingLanguages": "Loading speech languages",
+  "checkVoices": "Check the voices installed in Android text-to-speech settings.",
+  "noLanguages": "No matching languages.",
+  "faceName": "{choice, select, digital{Digital} stacked{Stacked} analog{Analog} other{Digital}}",
+  "@faceName": {
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "faceDescription": "{choice, select, digital{Digital clock} stacked{Stacked clock} analog{Analog clock} other{Digital clock}}",
+  "@faceDescription": {
+    "description": "Name of the selected clock face shown on the home screen.",
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "digitSizeName": "{choice, select, small{Small} medium{Medium} large{Large} other{Small}}",
+  "@digitSizeName": {
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "typefaceName": "{choice, select, mono{Mono} sans{Sans serif} serif{Serif} other{Mono}}",
+  "@typefaceName": {
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "handName": "{choice, select, hour{Hour hand} minute{Minute hand} second{Second hand} other{Hour hand}}",
+  "@handName": {
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "weightName": "{choice, select, slim{Slim} regular{Regular} bold{Bold} other{Slim}}",
+  "@weightName": {
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "markingsName": "{choice, select, numbers{All numbers} quarters{Quarters} ticks{Ticks} other{All numbers}}",
+  "@markingsName": {
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "formatName": "{choice, select, device{Device} h12{12-hour} h24{24-hour} other{Device}}",
+  "@formatName": {
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "paletteName": "{choice, select, original{Original colors} whiteOnBlack{White on black} blackOnWhite{Black on white} yellowOnBlack{Yellow on black} other{Original colors}}",
+  "@paletteName": {
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "colorName": "{choice, select, ivory{Ivory} charcoal{Charcoal} white{White} black{Black} apricot{Apricot} yellow{Yellow} skyBlue{Sky blue} navy{Navy} mint{Mint} other{Ivory}}",
+  "@colorName": {
+    "placeholders": {
+      "choice": {
+        "type": "String"
+      }
+    }
+  },
+  "lowContrast": "Low contrast between the {part, select, digits{digits} hourDigits{hour digits} minuteDigits{minute digits} dialMarkings{dial markings} hourHand{hour hand} minuteHand{minute hand} secondHand{second hand} other{digits}} and the background.",
+  "@lowContrast": {
+    "description": "Accessibility warning that names the clock element with the least contrast against the background.",
+    "placeholders": {
+      "part": {
+        "type": "String"
+      }
+    }
+  }
+}

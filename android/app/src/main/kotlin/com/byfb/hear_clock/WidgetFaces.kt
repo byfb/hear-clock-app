@@ -14,7 +14,8 @@ import android.widget.RemoteViews
 
 internal class WidgetFaces(private val context: Context, private val settings: ClockSettings) {
     private val dial = if (settings.variant == "analog") DialArtwork(settings) else null
-    private val locale = context.resources.configuration.locales[0]
+    // The launcher's live TextClock supplies digits and AM/PM in the phone's locale.
+    private val locale = AppLanguages.deviceLocale(context)
     private val speak = PendingIntent.getBroadcast(context, 0,
         Intent(context, ClockWidget::class.java).setAction(ClockWidget.SPEAK),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)

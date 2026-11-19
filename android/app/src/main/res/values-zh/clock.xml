@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="second_hand">秒针</string>
+    <string name="legacy_seconds">正在更新桌面小组件的秒针</string>
+    <string name="voice_unavailable">无法使用此报时语言。请在时钟设置中选择已安装的语音。</string>
+    <string name="widget_description">点一下即可听到当地时间。长按可调整大小。</string>
+    <string name="speech_error">无法报时。请检查 Android 的文字转语音设置，然后重试。</string>
+</resources>

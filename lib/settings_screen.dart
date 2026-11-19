@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app_language.dart';
 import 'clock_face.dart';
 import 'clock_palette.dart';
 import 'clock_settings.dart';
 import 'clock_theme.dart';
 import 'color_screen.dart';
 import 'speech_language_screen.dart';
+import 'l10n/generated/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
@@ -26,13 +28,14 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late ClockSettings _draft = widget.initial;
   var _saving = false;
-  String? _error;
+  var _saveFailed = false;
+  AppLocalizations get strings => AppLocalizations.of(context);
 
   Future<void> _save() async {
     if (_saving) return;
     setState(() {
       _saving = true;
-      _error = null;
+      _saveFailed = false;
     });
     try {
       await widget.onSave(_draft);
@@ -40,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } on PlatformException {
       if (mounted) {
         setState(() {
-          _error = 'Couldn’t save these settings. Try again.';
+          _saveFailed = true;
           _saving = false;
         });
       }
@@ -50,11 +53,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ClockHand _hand = ClockHand.hour;
 
   Widget _color(
-    String label,
+    String Function(AppLocalizations) label,
     Color initial,
     ClockSettings Function(Color) change,
   ) => _ColorRow(
-    label: label,
+    label: label(strings),
     color: initial,
     onTap: () async {
       final color = await Navigator.push<Color>(
@@ -80,53 +83,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final stacked = _draft.variant == FaceVariant.stacked;
     return [
       _color(
-        stacked ? 'Hour digit color' : 'Digit color',
+        (s) => stacked ? s.hourDigitColor : s.digitColor,
         style.digits,
         (c) => _draft.withText(style.copyWith(digits: c)),
       ),
       if (stacked)
         _color(
-          'Minute digit color',
+          (s) => s.minuteDigitColor,
           style.minuteColor,
           (c) => _draft.withText(style.copyWith(minuteColor: c)),
         ),
       const Divider(height: 1),
       _color(
-        'Background color',
+        (s) => s.backgroundColor,
         style.face,
         (c) => _draft.withText(style.copyWith(face: c)),
       ),
       const Divider(height: 1),
       _Choices<DigitSize>(
-        label: 'Digit size',
+        label: strings.digitSize,
         values: DigitSize.values,
         selected: style.size,
-        name: (v) => v.label,
+        name: (v) => strings.digitSizeName(v.name),
         onChange: (v) => _editDigits(style.copyWith(size: v)),
       ),
       _Choices<DigitFont>(
-        label: 'Typeface',
+        label: strings.typeface,
         values: DigitFont.values,
         selected: style.font,
-        name: (v) => v.label,
+        name: (v) => strings.typefaceName(v.name),
         onChange: (v) => _editDigits(style.copyWith(font: v)),
       ),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
-        title: const Text('Bold digits'),
+        title: Text(strings.boldDigits),
         value: style.bold,
         onChanged: (v) => _editDigits(style.copyWith(bold: v)),
       ),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
-        title: const Text('Leading zero in 12-hour time'),
+        title: Text(strings.leadingZero),
         value: style.padHour,
         onChanged: (v) => _editDigits(style.copyWith(padHour: v)),
       ),
       if (!stacked)
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Show seconds'),
+          title: Text(strings.showSeconds),
           value: style.seconds,
           onChanged: (v) => _editDigits(style.copyWith(seconds: v)),
         ),
@@ -139,54 +142,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ? ClockHand.hour
         : _hand;
     final hand = dial.hand(selected);
-    final title = selected.label;
+    final title = strings.handName(selected.name);
     void update(DialStyle next) =>
         setState(() => _draft = _draft.copyWith(dial: next));
     return [
       _color(
-        'Background color',
+        (s) => s.backgroundColor,
         dial.face,
         (c) => _draft.copyWith(dial: dial.copyWith(face: c)),
       ),
       _color(
-        'Marking color',
+        (s) => s.markingColor,
         dial.marks,
         (c) => _draft.copyWith(dial: dial.copyWith(marks: c)),
       ),
       _Choices<DialLabels>(
-        label: 'Dial markings',
+        label: strings.dialMarkings,
         values: DialLabels.values,
         selected: dial.labels,
-        name: (v) => v.label,
+        name: (v) => strings.markingsName(v.name),
         onChange: (v) => update(dial.copyWith(labels: v)),
       ),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
-        title: const Text('Show second hand'),
+        title: Text(strings.showSecondHand),
         value: dial.seconds,
         onChanged: (v) => update(dial.copyWith(seconds: v)),
       ),
       const Divider(height: 1),
       _Choices<ClockHand>(
-        label: 'Customize a hand',
+        label: strings.customizeHand,
         values: [
           ClockHand.hour,
           ClockHand.minute,
           if (dial.seconds) ClockHand.second,
         ],
         selected: selected,
-        name: (v) => v.label,
+        name: (v) => strings.handName(v.name),
         onChange: (v) => setState(() => _hand = v),
       ),
       _color(
-        '$title color',
+        (s) => s.handColor(s.handName(selected.name)),
         hand.color,
         (c) => _draft.copyWith(
           dial: dial.withHand(selected, hand.copyWith(color: c)),
         ),
       ),
       _PercentageSlider(
-        label: '$title length',
+        label: strings.handLength(title),
         value: hand.length,
         min: 35,
         max: 95,
@@ -195,14 +198,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
             update(dial.withHand(selected, hand.copyWith(length: v))),
       ),
       _Choices<HandWeight>(
-        label: '$title thickness',
+        label: strings.handThickness(title),
         values: HandWeight.values,
         selected: hand.weight,
-        name: (v) => v.label,
+        name: (v) => strings.weightName(v.name),
         onChange: (v) =>
             update(dial.withHand(selected, hand.copyWith(weight: v))),
       ),
     ];
+  }
+
+  Future<void> _pickAppLanguage() async {
+    final preference = AppLanguageScope.of(context);
+    final choice = await showDialog<AppLanguage>(
+      context: context,
+      builder: (context) {
+        final strings = AppLocalizations.of(context);
+        return SimpleDialog(
+          title: Text(strings.appLanguage),
+          children: [
+            for (final language in AppLanguage.values)
+              ListTile(
+                title: Semantics(
+                  localeForSubtree: language.locale,
+                  child: Text(language.label(strings)),
+                ),
+                selected: language == preference.selected,
+                trailing: language == preference.selected
+                    ? const Icon(Icons.check)
+                    : null,
+                onTap: () => Navigator.pop(context, language),
+              ),
+          ],
+        );
+      },
+    );
+    if (!mounted || choice == null || choice == preference.selected) return;
+    try {
+      await preference.change(choice);
+    } on PlatformException {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(strings.languageError)));
+      }
+    }
   }
 
   Future<void> _pickLanguage() async {
@@ -237,19 +276,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
     children: [
       ClockFace(compact: true, settings: _draft, platform: widget.platform),
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.language),
+        title: Text(strings.appLanguage),
+        subtitle: Text(AppLanguageScope.of(context).selected.label(strings)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: _pickAppLanguage,
+      ),
       _Choices<FaceVariant>(
-        label: 'Clock face',
+        label: strings.clockFace,
         values: FaceVariant.values,
         selected: _draft.variant,
-        name: (v) => v.label,
+        name: (v) => strings.faceName(v.name),
         onChange: (v) => setState(() => _draft = _draft.copyWith(variant: v)),
       ),
       const SizedBox(height: 12),
       ListTile(
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.contrast),
-        title: const Text('Color combinations'),
-        subtitle: Text(ClockPalette.current(_draft)?.label ?? 'Custom colors'),
+        title: Text(strings.colorCombinations),
+        subtitle: Text(switch (ClockPalette.current(_draft)) {
+          final palette? => strings.paletteName(palette.name),
+          null => strings.customColors,
+        }),
         trailing: const Icon(Icons.chevron_right),
         onTap: _pickPalette,
       ),
@@ -261,10 +311,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ..._digitControls(),
       const Divider(height: 1),
       _Choices<ClockFormat>(
-        label: 'Time format',
+        label: strings.timeFormat,
         values: ClockFormat.values,
         selected: _draft.format,
-        name: (v) => v.label,
+        name: (v) => strings.formatName(v.name),
         onChange: (v) => setState(() => _draft = _draft.copyWith(format: v)),
       ),
       const Divider(height: 24),
@@ -272,7 +322,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         alignment: AlignmentDirectional.centerStart,
         child: TextButton(
           onPressed: () => setState(() => _draft = const ClockSettings()),
-          child: const Text('Restore all defaults'),
+          child: Text(strings.restoreDefaults),
         ),
       ),
     ],
@@ -284,11 +334,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } on PlatformException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error.message ?? 'Check your Android text-to-speech voice.',
-          ),
-        ),
+        SnackBar(content: Text(error.message ?? strings.speechError)),
       );
     }
   }
@@ -298,8 +344,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
     children: [
       ListTile(
-        title: const Text('Speech language'),
-        subtitle: Text(_draft.language.label),
+        title: Text(strings.speechLanguage),
+        subtitle: Text(_draft.language.displayName(strings)),
         contentPadding: const EdgeInsets.symmetric(vertical: 8),
         trailing: const Icon(Icons.chevron_right),
         onTap: _pickLanguage,
@@ -307,7 +353,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       const Divider(height: 1),
       const SizedBox(height: 24),
       _PercentageSlider(
-        label: 'Speech speed',
+        label: strings.speechSpeed,
         value: _draft.speechRate,
         min: 50,
         max: 200,
@@ -319,7 +365,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         alignment: AlignmentDirectional.centerStart,
         child: OutlinedButton.icon(
           icon: const Icon(Icons.volume_up_outlined),
-          label: const Text('Test voice'),
+          label: Text(strings.testVoice),
           onPressed: _testVoice,
         ),
       ),
@@ -335,7 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Scaffold(
         appBar: ClockTheme.settingsBar(
           context,
-          'Clock settings',
+          strings.clockSettings,
           bottom: TabBar(
             labelPadding: const EdgeInsets.symmetric(horizontal: 4),
             labelStyle: const TextStyle(
@@ -348,8 +394,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 .colorScheme
                 .onSurfaceVariant,
             tabs: [
-              Tab(height: tabHeight, text: 'Appearance'),
-              Tab(height: tabHeight, text: 'Voice'),
+              Tab(height: tabHeight, text: strings.appearance),
+              Tab(height: tabHeight, text: strings.voice),
             ],
           ),
         ),
@@ -363,9 +409,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         bottomNavigationBar: _SaveBar(
-          label: _saving ? 'Saving…' : 'Save settings',
+          label: _saving ? strings.saving : strings.saveSettings,
           onTap: _saving ? null : _save,
-          error: _error,
+          error: _saveFailed ? strings.saveError : null,
         ),
       ),
     );
@@ -394,7 +440,7 @@ class _PercentageSlider extends StatelessWidget {
         children: [
           ExcludeSemantics(
             child: Text(
-              '$label, $value%',
+              AppLocalizations.of(context).sliderValue(label, value),
               style: const TextStyle(fontSize: 18),
             ),
           ),
@@ -403,7 +449,8 @@ class _PercentageSlider extends StatelessWidget {
             max: max.toDouble(),
             divisions: divisions,
             value: value.toDouble(),
-            semanticFormatterCallback: (v) => '${v.round()} percent',
+            semanticFormatterCallback: (v) =>
+                AppLocalizations.of(context).spokenPercent(v.round()),
             onChanged: (v) => onChanged(v.round()),
           ),
         ],
@@ -429,7 +476,7 @@ class _ColorRow extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
       leading: ColorSwatchMark(color),
       title: Text(label),
-      subtitle: Text(colorName(color)),
+      subtitle: Text(colorName(color, AppLocalizations.of(context))),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
     ),

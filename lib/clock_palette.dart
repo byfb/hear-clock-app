@@ -4,13 +4,12 @@ import 'clock_settings.dart';
 import 'clock_theme.dart';
 
 enum ClockPalette {
-  original('Original colors', ClockTheme.digits, ClockTheme.panel),
-  whiteOnBlack('White on black', ClockTheme.white, ClockTheme.black),
-  blackOnWhite('Black on white', ClockTheme.black, ClockTheme.white),
-  yellowOnBlack('Yellow on black', ClockTheme.yellow, ClockTheme.black);
+  original(ClockTheme.digits, ClockTheme.panel),
+  whiteOnBlack(ClockTheme.white, ClockTheme.black),
+  blackOnWhite(ClockTheme.black, ClockTheme.white),
+  yellowOnBlack(ClockTheme.yellow, ClockTheme.black);
 
-  const ClockPalette(this.label, this.ink, this.background);
-  final String label;
+  const ClockPalette(this.ink, this.background);
   final Color ink, background;
 
   Color get _stackMinutes => this == original ? ClockTheme.sky : ink;

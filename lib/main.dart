@@ -1,29 +1,103 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app_language.dart';
 import 'clock_face.dart';
 import 'clock_settings.dart';
 import 'clock_theme.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'settings_screen.dart';
 
 void main() => runApp(const HearClockApp());
 
-class HearClockApp extends StatelessWidget {
+class HearClockApp extends StatefulWidget {
   const HearClockApp({super.key, this.platform = const ClockPlatform()});
   final ClockPlatform platform;
 
   @override
+  State<HearClockApp> createState() => _HearClockAppState();
+}
+
+class _HearClockAppState extends State<HearClockApp>
+    with WidgetsBindingObserver {
+  var _language = AppLanguage.system;
+  bool? _device24;
+  var _read = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    widget.platform.onTimeFormatChanged((value) {
+      if (mounted && _device24 != value) setState(() => _device24 = value);
+    });
+    _reloadPreferences();
+  }
+
+  Future<void> _reloadPreferences() async {
+    final read = ++_read;
+    try {
+      final value = await widget.platform.displayPreferences();
+      if (mounted &&
+          read == _read &&
+          (value.language != _language || value.device24 != _device24)) {
+        setState(() {
+          _language = value.language;
+          _device24 = value.device24;
+        });
+      }
+    } on PlatformException {
+      // Android's locale is already available to Flutter during startup.
+    }
+  }
+
+  Future<void> _changeLanguage(AppLanguage language) async {
+    ++_read;
+    await widget.platform.setAppLanguage(language);
+    if (mounted) {
+      ++_read;
+      setState(() => _language = language);
+    }
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) => _reloadPreferences();
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _reloadPreferences();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.platform.onTimeFormatChanged(null);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Hear Clock',
+    locale: _language.locale,
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    localeListResolutionCallback: resolveAppLocale,
     debugShowCheckedModeBanner: false,
     theme: ClockTheme.data(Brightness.light),
     darkTheme: ClockTheme.data(Brightness.dark),
     themeMode: ThemeMode.system,
-    builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
-      value: ClockTheme.systemBars(Theme.of(context).brightness),
-      child: child!,
+    builder: (context, child) => AppLanguageScope(
+      selected: _language,
+      change: _changeLanguage,
+      child: MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: _device24),
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: ClockTheme.systemBars(Theme.of(context).brightness),
+          child: Semantics(localeForSubtree: _language.locale, child: child),
+        ),
+      ),
     ),
-    home: _Home(platform: platform),
+    home: _Home(platform: widget.platform),
   );
 }
 
@@ -86,14 +160,12 @@ class _HomeState extends State<_Home> {
       context: context,
       builder: (context) => AlertDialog(
         shape: ClockTheme.shape,
-        title: const Text('Add the widget'),
-        content: const Text(
-          'Touch and hold an empty spot on your home screen. Open Widgets, then drag Hear Clock onto the screen.',
-        ),
+        title: Text(AppLocalizations.of(context).addWidgetTitle),
+        content: Text(AppLocalizations.of(context).placeWidget),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Done'),
+            child: Text(AppLocalizations.of(context).done),
           ),
         ],
       ),
@@ -103,6 +175,7 @@ class _HomeState extends State<_Home> {
   @override
   Widget build(BuildContext context) {
     final settings = _settings;
+    final strings = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Align(
@@ -153,14 +226,16 @@ class _HomeState extends State<_Home> {
                           vertical: 10,
                         ),
                         leading: Icon(Icons.tune, color: colors.primary),
-                        title: const Text(
-                          'Settings',
-                          style: TextStyle(
+                        title: Text(
+                          strings.settings,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        subtitle: Text('${settings.variant.label} clock'),
+                        subtitle: Text(
+                          strings.faceDescription(settings.variant.name),
+                        ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: _openSettings,
                       ),
@@ -174,30 +249,25 @@ class _HomeState extends State<_Home> {
                           Icons.widgets_outlined,
                           color: colors.primary,
                         ),
-                        title: const Text(
-                          'Add widget',
-                          style: TextStyle(
+                        title: Text(
+                          strings.addWidget,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        subtitle: const Text(
-                          'Touch and hold the widget to resize it.',
-                        ),
+                        subtitle: Text(strings.resizeWidget),
                         trailing: const Icon(Icons.add),
                         onTap: _pinning ? null : _addWidget,
                       ),
                       const Divider(height: 1),
                     ] else if (_loadFailed) ...[
-                      const Text('Couldn’t load clock settings.'),
-                      TextButton(
-                        onPressed: _load,
-                        child: const Text('Try again'),
-                      ),
+                      Text(strings.loadError),
+                      TextButton(onPressed: _load, child: Text(strings.retry)),
                     ] else
-                      const Center(
+                      Center(
                         child: CircularProgressIndicator(
-                          semanticsLabel: 'Loading clock',
+                          semanticsLabel: strings.loadingClock,
                         ),
                       ),
                   ],

@@ -41,11 +41,11 @@ internal object TimeSpeaker {
                     val locales = if (voices.isEmpty()) tts.availableLanguages.orEmpty()
                         else voices.filterNot { TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED in it.features.orEmpty() }
                             .map { it.locale }
-                    val names = Collator.getInstance()
+                    val names = Collator.getInstance(AppLanguages.localized(context).resources.configuration.locales[0])
                     locales.filter { it.language.isNotEmpty() && it.toLanguageTag() != "und" }
                         .distinctBy { it.toLanguageTag() }
-                        .sortedWith(compareBy(names) { it.displayName })
-                        .map { mapOf("tag" to it.toLanguageTag(), "label" to it.displayName) }
+                        .sortedWith(compareBy(names) { it.getDisplayName(it) })
+                        .map { mapOf("tag" to it.toLanguageTag(), "label" to it.getDisplayName(it)) }
                 }
                 finish(result.getOrNull())
             } }
@@ -58,7 +58,7 @@ internal object TimeSpeaker {
     fun read(context: Context, settings: ClockSettings = ClockSettings.load(context), done: (Int?) -> Unit) {
         current?.finish(null)
         val app = context.applicationContext
-        val locale = if (settings.language.isEmpty()) app.resources.configuration.locales[0]
+        val locale = if (settings.language.isEmpty()) AppLanguages.deviceLocale(app)
             else Locale.forLanguageTag(settings.language)
         val timeAtTap = Date()
         val request = Request(done)

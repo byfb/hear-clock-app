@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="second_hand">秒針</string>
+    <string name="legacy_seconds">正在更新主畫面小工具的秒針</string>
+    <string name="voice_unavailable">無法使用此報時語言。請在時鐘設定中選擇已安裝的語音。</string>
+    <string name="widget_description">輕點即可聽到本地時間。長按可調整大小。</string>
+    <string name="speech_error">無法報時。請檢查 Android 的文字轉語音設定，然後再試。</string>
+</resources>

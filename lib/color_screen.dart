@@ -4,6 +4,7 @@ import 'clock_face.dart';
 import 'clock_palette.dart';
 import 'clock_settings.dart';
 import 'clock_theme.dart';
+import 'l10n/generated/app_localizations.dart';
 
 class ColorSwatchMark extends StatelessWidget {
   const ColorSwatchMark(this.color, {super.key});
@@ -34,7 +35,7 @@ class ContrastNote extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Text(
-          'Low contrast between the ${pair.part} and the background.',
+          AppLocalizations.of(context).lowContrast(pair.part.name),
           style: TextStyle(
             color: Theme.of(context).colorScheme.error,
             fontSize: 16,
@@ -53,7 +54,10 @@ class ColorCombinationsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: ClockTheme.settingsBar(context, 'Color combinations'),
+      appBar: ClockTheme.settingsBar(
+        context,
+        AppLocalizations.of(context).colorCombinations,
+      ),
       body: SafeArea(
         top: false,
         child: Align(
@@ -95,7 +99,7 @@ class ColorCombinationsScreen extends StatelessWidget {
                         ),
                       ),
                       title: Text(
-                        palette.label,
+                        AppLocalizations.of(context).paletteName(palette.name),
                         style: const TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w500,
@@ -126,7 +130,7 @@ class ColorScreen extends StatefulWidget {
     required this.preview,
     required this.platform,
   });
-  final String title;
+  final String Function(AppLocalizations) title;
   final Color initial;
   final ClockSettings Function(Color) preview;
   final ClockPlatform platform;
@@ -139,7 +143,7 @@ class _ColorScreenState extends State<ColorScreen> {
   static final _hex = RegExp(r'^#?([0-9a-fA-F]{6})$');
   late Color _picked = widget.initial;
   late final _input = TextEditingController(text: hexColor(_picked));
-  String? _error;
+  var _invalid = false;
 
   @override
   void dispose() {
@@ -159,14 +163,14 @@ class _ColorScreenState extends State<ColorScreen> {
     setState(() {
       _picked = color;
       _input.text = hexColor(color);
-      _error = null;
+      _invalid = false;
     });
   }
 
   void _apply() {
     final chosen = _parse(_input.text);
     if (chosen == null) {
-      setState(() => _error = 'Enter six hex digits, such as FFD459.');
+      setState(() => _invalid = true);
     } else {
       Navigator.pop(context, chosen);
     }
@@ -177,7 +181,10 @@ class _ColorScreenState extends State<ColorScreen> {
     final preview = widget.preview(_picked);
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: ClockTheme.settingsBar(context, widget.title),
+      appBar: ClockTheme.settingsBar(
+        context,
+        widget.title(AppLocalizations.of(context)),
+      ),
       body: SafeArea(
         top: false,
         child: Center(
@@ -200,7 +207,9 @@ class _ColorScreenState extends State<ColorScreen> {
                     for (final color in namedColors.entries)
                       ChoiceChip(
                         avatar: ColorSwatchMark(color.key),
-                        label: Text(color.value),
+                        label: Text(
+                          AppLocalizations.of(context).colorName(color.value),
+                        ),
                         selected: color.key == _picked,
                         showCheckmark: true,
                         shape: ClockTheme.shape,
@@ -225,20 +234,25 @@ class _ColorScreenState extends State<ColorScreen> {
                   textCapitalization: TextCapitalization.characters,
                   onSubmitted: (_) => _apply(),
                   decoration: InputDecoration(
-                    labelText: 'Custom hex color',
+                    labelText: AppLocalizations.of(context).hexColor,
                     hintText: 'FFD459',
-                    errorText: _error,
+                    errorText: _invalid
+                        ? AppLocalizations.of(context).invalidHex
+                        : null,
                   ),
                   onChanged: (value) {
                     final next = _parse(value);
                     setState(() {
                       if (next != null) _picked = next;
-                      _error = null;
+                      _invalid = false;
                     });
                   },
                 ),
                 const SizedBox(height: 18),
-                FilledButton(onPressed: _apply, child: const Text('Use color')),
+                FilledButton(
+                  onPressed: _apply,
+                  child: Text(AppLocalizations.of(context).useColor),
+                ),
               ],
             ),
           ),

@@ -3,40 +3,50 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app_language.dart';
 import 'clock_theme.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'face_styles.dart';
 export 'face_styles.dart';
 
-enum ClockFormat {
-  device('Device'),
-  h12('12-hour'),
-  h24('24-hour');
+enum ClockFormat { device, h12, h24 }
 
-  const ClockFormat(this.label);
-  final String label;
+enum ClockPart {
+  digits,
+  hourDigits,
+  minuteDigits,
+  dialMarkings,
+  hourHand,
+  minuteHand,
+  secondHand,
 }
 
 String hexColor(Color color) =>
     rgb(color).toRadixString(16).padLeft(6, '0').toUpperCase();
 
 final namedColors = Map<Color, String>.unmodifiable({
-  ClockTheme.digits: 'Ivory',
-  ClockTheme.panel: 'Charcoal',
-  ClockTheme.white: 'White',
-  ClockTheme.black: 'Black',
-  ClockTheme.accent: 'Apricot',
-  ClockTheme.yellow: 'Yellow',
-  ClockTheme.sky: 'Sky blue',
-  ClockTheme.navy: 'Navy',
-  ClockTheme.mint: 'Mint',
+  ClockTheme.digits: 'ivory',
+  ClockTheme.panel: 'charcoal',
+  ClockTheme.white: 'white',
+  ClockTheme.black: 'black',
+  ClockTheme.accent: 'apricot',
+  ClockTheme.yellow: 'yellow',
+  ClockTheme.sky: 'skyBlue',
+  ClockTheme.navy: 'navy',
+  ClockTheme.mint: 'mint',
 });
 
-String colorName(Color color) => namedColors[color] ?? '#${hexColor(color)}';
+String colorName(Color color, AppLocalizations strings) {
+  final key = namedColors[color];
+  return key == null ? '#${hexColor(color)}' : strings.colorName(key);
+}
 
 @immutable
 class SpeechLanguage {
   const SpeechLanguage(this.tag, this.label);
-  static const device = SpeechLanguage('', 'Device language');
+  static const device = SpeechLanguage('', '');
+  String displayName(AppLocalizations strings) =>
+      tag.isEmpty ? strings.deviceLanguage : label;
   final String tag;
   final String label;
 }
@@ -123,19 +133,19 @@ class ClockSettings {
     speechRate: speechRate ?? this.speechRate,
   );
 
-  ({String part, double ratio}) get lowestContrast {
+  ({ClockPart part, double ratio}) get lowestContrast {
     final background = face.computeLuminance();
     final colors = switch (variant) {
-      FaceVariant.digital => {'digits': digital.digits},
+      FaceVariant.digital => {ClockPart.digits: digital.digits},
       FaceVariant.stacked => {
-        'hour digits': stacked.digits,
-        'minute digits': stacked.minuteColor,
+        ClockPart.hourDigits: stacked.digits,
+        ClockPart.minuteDigits: stacked.minuteColor,
       },
       FaceVariant.analog => {
-        'dial markings': dial.marks,
-        'hour hand': dial.hour.color,
-        'minute hand': dial.minute.color,
-        if (dial.seconds) 'second hand': dial.second.color,
+        ClockPart.dialMarkings: dial.marks,
+        ClockPart.hourHand: dial.hour.color,
+        ClockPart.minuteHand: dial.minute.color,
+        if (dial.seconds) ClockPart.secondHand: dial.second.color,
       },
     };
     return colors.entries
@@ -155,6 +165,31 @@ class ClockSettings {
 class ClockPlatform {
   const ClockPlatform();
   static const _channel = MethodChannel('com.byfb.hear_clock/clock');
+  Future<({AppLanguage language, bool device24})> displayPreferences() async {
+    final values = (await _channel.invokeMapMethod<String, Object>(
+      'displayPreferences',
+    ))!;
+    return (
+      language: AppLanguage.fromTag(values['language'] as String),
+      device24: values['device24'] as bool,
+    );
+  }
+
+  void onTimeFormatChanged(ValueChanged<bool>? callback) {
+    _channel.setMethodCallHandler(
+      callback == null
+          ? null
+          : (call) async {
+              if (call.method == 'timeFormatChanged') {
+                callback(call.arguments as bool);
+              }
+            },
+    );
+  }
+
+  Future<void> setAppLanguage(AppLanguage language) =>
+      _channel.invokeMethod<void>('setAppLanguage', language.tag);
+
   Future<ClockSettings> load() async => ClockSettings.fromMap(
     await _channel.invokeMapMethod<Object?, Object?>('load') ?? {},
   );
