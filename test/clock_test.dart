@@ -3,12 +3,26 @@ import 'dart:ui' show SemanticsAction;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hear_clock/app_language.dart';
 import 'package:hear_clock/clock_face.dart';
 import 'package:hear_clock/clock_palette.dart';
 import 'package:hear_clock/clock_settings.dart';
+import 'package:hear_clock/l10n/generated/app_localizations.dart';
 import 'package:hear_clock/main.dart';
 
 class _Platform extends ClockPlatform {
+  AppLanguage interfaceLanguage = AppLanguage.system;
+  bool device24 = false;
+  ValueChanged<bool>? onHourFormat;
+  @override
+  Future<({AppLanguage language, bool device24})> displayPreferences() async =>
+      (language: interfaceLanguage, device24: device24);
+  @override
+  void onTimeFormatChanged(ValueChanged<bool>? callback) =>
+      onHourFormat = callback;
+  @override
+  Future<void> setAppLanguage(AppLanguage language) async =>
+      interfaceLanguage = language;
   ClockSettings saved = const ClockSettings();
   final readings = <ClockSettings>[];
   var failSpeech = false;
@@ -67,6 +81,139 @@ Future<void> _tap(
 }
 
 void main() {
+  test('Chinese script takes precedence over region and unsupported locales fall back', () {
+    Locale resolve(List<Locale> locales) =>
+        resolveAppLocale(locales, AppLocalizations.supportedLocales);
+    final hant = AppLanguage.traditional.locale!;
+    final hans = AppLanguage.simplified.locale!;
+    for (final region in ['HK', 'TW', 'MO']) {
+      expect(resolve([Locale('zh', region)]), hant);
+    }
+    expect(resolve([const Locale('fr'), const Locale('zh', 'SG')]), hans);
+    expect(
+      resolve([
+        const Locale.fromSubtags(
+          languageCode: 'zh',
+          scriptCode: 'Hans',
+          countryCode: 'TW',
+        ),
+      ]),
+      hans,
+    );
+    expect(
+      resolve([
+        const Locale.fromSubtags(
+          languageCode: 'zh',
+          scriptCode: 'Hant',
+          countryCode: 'CN',
+        ),
+      ]),
+      hant,
+    );
+    expect(resolve([const Locale('de')]), const Locale('en'));
+  });
+
+  testWidgets(
+    'regional Chinese follows the phone and localizes the clock action',
+    (tester) async {
+      tester.platformDispatcher.localesTestValue = [const Locale('zh', 'HK')];
+      addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+      final platform = _Platform()
+        ..saved = ClockSettings.fromMap({'format': 'h12'});
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      var clock = find.bySemanticsLabel('聽時間');
+      expect(clock, findsOneWidget);
+      expect(
+        tester.getSemantics(clock).value,
+        matches(RegExp(r'^本地時間，(上午|下午)\d+:\d\d$')),
+      );
+      expect(find.text('加入小工具'), findsOneWidget);
+      tester.platformDispatcher.localesTestValue = [const Locale('zh', 'CN')];
+      await tester.pumpAndSettle();
+      clock = find.bySemanticsLabel('听时间');
+      expect(clock, findsOneWidget);
+      expect(find.text('添加小组件'), findsOneWidget);
+      await tester.tap(clock);
+      await tester.pumpAndSettle();
+      expect(platform.readings, hasLength(1));
+      await _tap(tester, '添加小组件');
+      expect(find.textContaining('长按桌面空白处'), findsOneWidget);
+      await _tap(tester, '完成');
+      tester.platformDispatcher.localesTestValue = [const Locale('de')];
+      await tester.pumpAndSettle();
+      expect(find.text('Settings'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'changing the UI language keeps the phone hour cycle and live format changes',
+    (tester) async {
+      final platform = _Platform()..interfaceLanguage = AppLanguage.simplified;
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      final clock = find.bySemanticsLabel('听时间');
+      expect(
+        tester.getSemantics(clock).value,
+        matches(RegExp(r'(上午|下午)\d+:\d\d$')),
+      );
+      platform.device24 = true;
+      platform.onHourFormat!(true);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(clock).value,
+        matches(RegExp(r'^当地时间，\d\d:\d\d$')),
+      );
+    },
+  );
+
+  testWidgets(
+    'switching the interface language preserves a draft, voice, and clock settings',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final platform = _Platform()
+        ..saved = ClockSettings.fromMap({
+          'speech.language': 'fr-FR',
+          'speech.label': 'français (France)',
+          'speech.rate': 75,
+        });
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Settings');
+      await _tap(tester, 'Analog');
+      await _tap(tester, 'App language', scroll: -200);
+      await _tap(tester, '繁體中文');
+      expect(platform.interfaceLanguage, AppLanguage.traditional);
+      expect(find.text('時鐘設定'), findsOneWidget);
+      await _tap(tester, '語音');
+      expect(find.text('français (France)'), findsOneWidget);
+      final slider = find.bySemanticsLabel('語速');
+      await tester.ensureVisible(find.byType(Slider));
+      await tester.pumpAndSettle();
+      expect(tester.getSemantics(slider).getSemanticsData().value, '百分之75');
+      await _tap(tester, '試聽');
+      expect(platform.readings.single.variant, FaceVariant.analog);
+      expect(platform.readings.single.language.tag, 'fr-FR');
+      expect(platform.readings.single.speechRate, 75);
+      await _tap(tester, '儲存設定');
+      expect(find.text('指針時鐘'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      expect(find.text('設定'), findsOneWidget);
+      await _tap(tester, '設定');
+      await _tap(tester, '介面語言');
+      await _tap(tester, '跟隨系統語言');
+      expect(find.text('Clock settings'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test('noon, midnight and the device hour cycle', () {
     final midnight = DateTime(2026, 1, 1, 0, 3);
     final noon = DateTime(2026, 1, 1, 12, 0);
@@ -204,7 +351,7 @@ void main() {
       'minute.color': 0,
       'second.color': 0,
     });
-    expect(unreadable.lowestContrast, (part: 'minute hand', ratio: 1.0));
+    expect(unreadable.lowestContrast, (part: ClockPart.minuteHand, ratio: 1.0));
     expect(ClockPalette.current(unreadable), isNull);
   });
 
@@ -229,7 +376,7 @@ void main() {
     expect(platform.saved.digital.font, DigitFont.serif);
     expect(platform.saved.digital.seconds, isTrue);
     expect(platform.saved.stacked.size, DigitSize.small);
-    expect(colorName(platform.saved.stacked.minuteColor), 'Mint');
+    expect(rgb(platform.saved.stacked.minuteColor), 0xa9edc2);
     expect(platform.saved.stacked.padHour, isTrue);
     expect(platform.saved.seconds, isFalse);
     await _tap(tester, 'Settings');
@@ -237,7 +384,7 @@ void main() {
     await _tap(tester, 'Save settings');
     expect(platform.saved.seconds, isTrue);
     expect(rgb(platform.saved.digital.digits), 0xf1c04a);
-    expect(colorName(platform.saved.stacked.minuteColor), 'Mint');
+    expect(rgb(platform.saved.stacked.minuteColor), 0xa9edc2);
   });
 
   testWidgets('a customized second hand speaks from the analog face', (
@@ -278,7 +425,7 @@ void main() {
     expect(platform.saved.dial.minute.weight, HandWeight.regular);
     expect(platform.saved.dial.second.length, 65);
     expect(platform.saved.dial.second.weight, HandWeight.bold);
-    expect(colorName(platform.saved.dial.second.color), 'Yellow');
+    expect(rgb(platform.saved.dial.second.color), 0xffdd59);
     final clock = find.bySemanticsLabel('Hear the time');
     expect(clock, findsOneWidget);
     expect(

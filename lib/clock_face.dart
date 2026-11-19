@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'analog_dial.dart';
 import 'clock_settings.dart';
 import 'clock_theme.dart';
+import 'l10n/generated/app_localizations.dart';
 
 typedef ClockReading = ({String digits, String period});
 
@@ -16,6 +17,8 @@ ClockReading clockReading(
   required bool device24,
   bool seconds = false,
   bool padHour = false,
+  String am = 'AM',
+  String pm = 'PM',
 }) {
   final use24 =
       format == ClockFormat.h24 || (format == ClockFormat.device && device24);
@@ -31,8 +34,8 @@ ClockReading clockReading(
     period: use24
         ? ''
         : time.hour < 12
-        ? 'AM'
-        : 'PM',
+        ? am
+        : pm,
   );
 }
 
@@ -109,8 +112,7 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
           ..showSnackBar(
             SnackBar(
               content: Text(
-                error.message ??
-                    'Check your Android text-to-speech voice and try again.',
+                error.message ?? AppLocalizations.of(context).speechError,
               ),
             ),
           );
@@ -123,23 +125,26 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final settings = widget.settings;
+    final strings = AppLocalizations.of(context);
+    final material = MaterialLocalizations.of(context);
     final time = clockReading(
       _now,
       settings.format,
       device24: MediaQuery.alwaysUse24HourFormatOf(context),
       seconds: settings.seconds,
       padHour: settings.variant != FaceVariant.analog && settings.text.padHour,
+      am: material.anteMeridiemAbbreviation,
+      pm: material.postMeridiemAbbreviation,
     );
-    final label = [
-      time.digits,
-      if (time.period.isNotEmpty) time.period,
-    ].join(' ');
+    final label = time.period.isEmpty
+        ? time.digits
+        : strings.timeWithPeriod(time.digits, time.period);
     return Semantics(
-      label: widget.compact ? 'Clock preview' : 'Hear the time',
-      value: 'Local time, $label',
+      label: widget.compact ? strings.clockPreview : strings.hearTime,
+      value: strings.localTime(label),
       button: true,
       onTap: _speak,
-      onTapHint: widget.compact ? 'Hear the time' : null,
+      onTapHint: widget.compact ? strings.hearTime : null,
       excludeSemantics: true,
       child: Material(
         color: settings.face,
@@ -206,7 +211,9 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
-                                _speaking ? 'Reading time…' : 'Hear the time',
+                                _speaking
+                                    ? strings.readingTime
+                                    : strings.hearTime,
                                 style: const TextStyle(
                                   color: ClockTheme.onAccent,
                                   fontSize: 19,
@@ -250,18 +257,27 @@ class _DigitFace extends StatelessWidget {
       height: 1.08,
     );
     final parts = time.digits.split(':');
-    Widget line(String digits, String period, Color color) => Text.rich(
-      TextSpan(
-        text: digits,
-        children: [
-          if (period.isNotEmpty)
-            TextSpan(text: ' $period', style: const TextStyle(fontSize: 50)),
-        ],
-      ),
-      textDirection: TextDirection.ltr,
-      textScaler: TextScaler.noScaling,
-      style: font.copyWith(color: color),
-    );
+    Widget line(String digits, String period, Color color) {
+      final text = period.isEmpty
+          ? digits
+          : AppLocalizations.of(context).timeWithPeriod(digits, period);
+      final start = text.indexOf(period);
+      return Text.rich(
+        period.isEmpty
+            ? TextSpan(text: digits)
+            : TextSpan(
+                children: [
+                  TextSpan(text: text.substring(0, start)),
+                  TextSpan(text: period, style: const TextStyle(fontSize: 50)),
+                  TextSpan(text: text.substring(start + period.length)),
+                ],
+              ),
+        textDirection: TextDirection.ltr,
+        textScaler: TextScaler.noScaling,
+        style: font.copyWith(color: color),
+      );
+    }
+
     return FractionallySizedBox(
       widthFactor: style.size.fraction,
       heightFactor: style.size.fraction,

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hear Clock</string>
+    <string name="app_name" translatable="false">Hear Clock</string>
     <bool name="legacy_second_hand_service">true</bool>
     <string name="second_hand">Second hand</string>
     <string name="legacy_seconds">Updating the widget’s second hand</string>

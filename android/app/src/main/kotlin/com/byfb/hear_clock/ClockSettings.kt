@@ -50,7 +50,8 @@ internal class ClockSettings private constructor(private val values: Map<*, *>) 
 
     fun toMap(): Map<String, Any> = buildMap {
         for ((key, value) in this@ClockSettings.values) if (key is String && value != null) put(key, value)
-        put("speech.label", Locale.forLanguageTag(language).displayName)
+        val voiceLocale = Locale.forLanguageTag(language)
+        put("speech.label", voiceLocale.getDisplayName(voiceLocale))
     }
 
     fun save(context: Context) {
@@ -67,7 +68,7 @@ internal class ClockSettings private constructor(private val values: Map<*, *>) 
         editor.apply()
     }
 
-    fun uses24Hours(context: Context): Boolean = use24(DateFormat.is24HourFormat(context))
+    fun uses24Hours(context: Context): Boolean = use24(AppLanguages.deviceUses24Hours(context))
 
     private fun use24(system24: Boolean): Boolean = when (format) {
         "h12" -> false

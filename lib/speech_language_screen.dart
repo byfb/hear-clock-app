@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'clock_settings.dart';
 import 'clock_theme.dart';
+import 'l10n/generated/app_localizations.dart';
 
 class SpeechLanguageScreen extends StatefulWidget {
   const SpeechLanguageScreen({
@@ -19,9 +20,10 @@ class SpeechLanguageScreen extends StatefulWidget {
 class _SpeechLanguageScreenState extends State<SpeechLanguageScreen> {
   late Future<List<SpeechLanguage>> _languages = widget.platform.languages();
   String _query = '';
+  AppLocalizations get strings => AppLocalizations.of(context);
 
   Widget _row(SpeechLanguage language) => ListTile(
-    title: Text(language.label),
+    title: Text(language.displayName(strings)),
     selected: widget.selected.tag == language.tag,
     trailing: widget.selected.tag == language.tag
         ? const Icon(Icons.check)
@@ -31,7 +33,7 @@ class _SpeechLanguageScreenState extends State<SpeechLanguageScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: ClockTheme.settingsBar(context, 'Speech language'),
+    appBar: ClockTheme.settingsBar(context, strings.speechLanguage),
     body: SafeArea(
       top: false,
       child: Center(
@@ -53,30 +55,28 @@ class _SpeechLanguageScreenState extends State<SpeechLanguageScreen> {
                 children: [
                   if (languages.length > 5)
                     TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Find a language',
-                        prefixIcon: Icon(Icons.search),
+                      decoration: InputDecoration(
+                        labelText: strings.findLanguage,
+                        prefixIcon: const Icon(Icons.search),
                       ),
                       onChanged: (value) =>
                           setState(() => _query = value.trim().toLowerCase()),
                     ),
                   _row(SpeechLanguage.device),
                   if (snapshot.connectionState != ConnectionState.done)
-                    const LinearProgressIndicator(
-                      semanticsLabel: 'Loading speech languages',
+                    LinearProgressIndicator(
+                      semanticsLabel: strings.loadingLanguages,
                     )
                   else if (snapshot.hasError || languages.isEmpty) ...[
-                    const Text(
-                      'Check the voices installed in Android text-to-speech settings.',
-                    ),
+                    Text(strings.checkVoices),
                     TextButton(
                       onPressed: () => setState(
                         () => _languages = widget.platform.languages(),
                       ),
-                      child: const Text('Try again'),
+                      child: Text(strings.retry),
                     ),
                   ] else if (matches.isEmpty)
-                    const Text('No matching languages.')
+                    Text(strings.noLanguages)
                   else
                     ...matches.map(_row),
                 ],
