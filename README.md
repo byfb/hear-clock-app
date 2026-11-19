@@ -50,3 +50,7 @@ The APK is written to `build/app/outputs/flutter-apk/app-release.apk` and uses t
 From the repository root, run `dart run tool/release.dart minor` for a new feature, `patch` for a fix, or `major` for a breaking change. Add `--dry-run` to preview the next version. Ordinary builds reuse the current version.
 
 The release command builds the APK, increments the Android build number, records the completed version in `pubspec.yaml`, and saves the APK as `build/releases/hear-clock-<version>+<build>.apk`. Commit the version change and tag the release `v<version>`.
+
+## License
+
+Copyright 2026 byfb. Hear Clock is licensed under the GNU General Public License, version 3 only (`GPL-3.0-only`). [Read the license](LICENSE).
