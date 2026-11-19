@@ -249,9 +249,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: EdgeInsets.symmetric(vertical: 10),
                   child: Semantics(
                     liveRegion: true,
-                    child: const Text(
+                    child: Text(
                       'Low contrast. Pick one light color and one dark color for easier reading.',
-                      style: TextStyle(color: ClockTheme.error, fontSize: 16),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
@@ -431,14 +434,16 @@ class _Choices<T> extends StatelessWidget {
                 selected: selected == v,
                 label: Text(name(v)),
                 onSelected: (_) => onChange(v),
-                selectedColor: ClockTheme.accent,
-                backgroundColor: ClockTheme.panel,
-                checkmarkColor: ClockTheme.onAccent,
+                selectedColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                checkmarkColor: Theme.of(context).colorScheme.onPrimary,
                 shape: ClockTheme.shape,
                 materialTapTargetSize: MaterialTapTargetSize.padded,
                 labelStyle: TextStyle(
                   fontSize: 16,
-                  color: selected == v ? ClockTheme.onAccent : ClockTheme.ink,
+                  color: selected == v
+                      ? Theme.of(context).colorScheme.onPrimary
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
           ],
@@ -472,7 +477,9 @@ class _SaveBar extends StatelessWidget {
                   liveRegion: true,
                   child: Text(
                     error!,
-                    style: const TextStyle(color: ClockTheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ),
               FilledButton(onPressed: onTap, child: Text(label)),

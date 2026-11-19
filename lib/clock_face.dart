@@ -135,17 +135,22 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
       if (time.period.isNotEmpty) time.period,
     ].join(' ');
     return Semantics(
-      label: 'Local time, $label',
+      label: widget.compact ? 'Clock preview' : 'Hear the time',
+      value: 'Local time, $label',
       button: true,
       onTap: _speak,
-      onTapHint: 'Hear the time',
+      onTapHint: widget.compact ? 'Hear the time' : null,
       excludeSemantics: true,
       child: Material(
         color: settings.face,
         shape: RoundedRectangleBorder(
           borderRadius: ClockTheme.corner,
           side: BorderSide(
-            color: _focused ? ClockTheme.focus : ClockTheme.rule,
+            color: _focused
+                ? (settings.face.computeLuminance() > .18
+                      ? ClockTheme.black
+                      : ClockTheme.white)
+                : Theme.of(context).colorScheme.outline,
             width: _focused ? 3 : 1,
           ),
         ),
@@ -183,26 +188,12 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
                           ),
                   ),
                   if (!compact) ...[
-                    if (digital)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 22),
-                        child: SizedBox(
-                          height: 16,
-                          width: double.infinity,
-                          child: CustomPaint(
-                            painter: _MinuteScale(
-                              _now.minute,
-                              settings.text.digits,
-                            ),
-                          ),
-                        ),
-                      ),
                     Ink(
                       color: ClockTheme.accent,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
-                          vertical: 15,
+                          vertical: 17,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -287,38 +278,4 @@ class _DigitFace extends StatelessWidget {
       ),
     );
   }
-}
-
-/// The taller mark is the current minute. Every fifth mark is a longer division.
-class _MinuteScale extends CustomPainter {
-  const _MinuteScale(this.minute, this.ink);
-  final int minute;
-  final Color ink;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final line = Paint()..strokeWidth = 1;
-    for (var i = 0; i < 60; i++) {
-      final x = 2 + (size.width - 4) * i / 59;
-      final active = i == minute;
-      final major = i % 5 == 0;
-      final height = active
-          ? size.height
-          : major
-          ? 10.0
-          : 5.0;
-      line
-        ..color = active ? ink : ink.withValues(alpha: major ? .54 : .28)
-        ..strokeWidth = active ? 3 : 1;
-      canvas.drawLine(
-        Offset(x, size.height - height),
-        Offset(x, size.height),
-        line,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_MinuteScale old) =>
-      old.minute != minute || old.ink != ink;
 }

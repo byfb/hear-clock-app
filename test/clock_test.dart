@@ -60,6 +60,7 @@ Future<void> _tap(
     );
   }
   await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
   await tester.tap(target);
   await tester.pumpAndSettle();
 }
@@ -230,8 +231,12 @@ void main() {
     expect(platform.saved.dial.second.length, 65);
     expect(platform.saved.dial.second.weight, HandWeight.bold);
     expect(colorName(platform.saved.dial.second.color), 'Yellow');
-    final clock = find.bySemanticsLabel(RegExp(r'^Local time, \d+:\d\d:\d\d'));
+    final clock = find.bySemanticsLabel('Hear the time');
     expect(clock, findsOneWidget);
+    expect(
+      tester.getSemantics(clock).value,
+      matches(RegExp(r'^Local time, \d+:\d\d:\d\d')),
+    );
     await tester.tap(clock);
     await tester.pumpAndSettle();
     expect(platform.readings.single.variant, FaceVariant.analog);
@@ -244,7 +249,7 @@ void main() {
       final platform = _Platform();
       await tester.pumpWidget(HearClockApp(platform: platform));
       await tester.pumpAndSettle();
-      final clock = find.bySemanticsLabel(RegExp(r'^Local time, '));
+      final clock = find.bySemanticsLabel('Hear the time');
       expect(clock, findsOneWidget);
       expect(platform.readings, isEmpty);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
@@ -256,6 +261,29 @@ void main() {
       await tester.tap(clock);
       await tester.pumpAndSettle();
       expect(find.text('Check your text-to-speech voice.'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'the clock is the first keyboard action and keeps its colors when Android changes theme',
+    (tester) async {
+      final platform = _Platform()
+        ..saved = ClockSettings.fromMap({'face': 0x102946, 'digits': 0xffdd59});
+      tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      final face = find.byType(ClockFace);
+      expect(Theme.of(tester.element(face)).brightness, Brightness.light);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(platform.readings, hasLength(1));
+      tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+      await tester.pumpAndSettle();
+      expect(Theme.of(tester.element(face)).brightness, Brightness.dark);
+      expect(rgb(tester.widget<ClockFace>(face).settings.face), 0x102946);
+      expect(platform.readings, hasLength(1));
     },
   );
 

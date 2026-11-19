@@ -16,7 +16,13 @@ class HearClockApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'Hear Clock',
     debugShowCheckedModeBanner: false,
-    theme: ClockTheme.data,
+    theme: ClockTheme.data(Brightness.light),
+    darkTheme: ClockTheme.data(Brightness.dark),
+    themeMode: ThemeMode.system,
+    builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+      value: ClockTheme.systemBars(Theme.of(context).brightness),
+      child: child!,
+    ),
     home: _Home(platform: platform),
   );
 }
@@ -106,123 +112,95 @@ class _HomeState extends State<_Home> {
             child: LayoutBuilder(
               builder: (context, bounds) {
                 final gutter = bounds.maxWidth > 600 ? 36.0 : 20.0;
-                final shortLandscape =
-                    bounds.maxHeight < 480 &&
-                    bounds.maxWidth > bounds.maxHeight;
-                return SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: gutter),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 14),
-                        Wrap(
-                          alignment: WrapAlignment.spaceBetween,
-                          runSpacing: 6,
-                          spacing: 10,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ClockMark(),
-                                SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    'Hear Clock',
-                                    style: TextStyle(
-                                      fontSize: 23,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: -.6,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: settings == null
-                                  ? null
-                                  : _openSettings,
-                              icon: const Icon(Icons.tune, size: 20),
-                              label: const Text('Settings'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        const Divider(height: 1),
-                        SizedBox(
-                          height: shortLandscape
-                              ? 12
-                              : (bounds.maxHeight * .065).clamp(24.0, 54.0),
-                        ),
-                        if (settings != null) ...[
-                          if (!shortLandscape) ...[
-                            Semantics(
-                              header: true,
-                              child: const Text(
-                                'Local time',
-                                style: TextStyle(
-                                  fontSize: 34,
-                                  height: 1.18,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: -1.1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                          ],
-                          ClockFace(
-                            settings: settings,
-                            platform: widget.platform,
-                          ),
-                          const SizedBox(height: 36),
-                          const Divider(height: 1),
-                          const SizedBox(height: 22),
-                          Semantics(
-                            header: true,
-                            child: const Text(
-                              'Home screen widget',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: -.4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 7),
-                          const Text(
-                            'Touch and hold the widget to resize it.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              height: 1.45,
-                              color: ClockTheme.muted,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: OutlinedButton.icon(
-                              onPressed: _pinning ? null : _addWidget,
-                              icon: const Icon(Icons.add, size: 20),
-                              label: const Text('Add widget'),
-                            ),
-                          ),
-                        ] else if (_loadFailed) ...[
-                          const Text('Couldn’t load clock settings.'),
-                          TextButton(
-                            onPressed: _load,
-                            child: const Text('Try again'),
-                          ),
-                        ] else
-                          const Center(
-                            child: CircularProgressIndicator(
-                              semanticsLabel: 'Loading clock',
-                            ),
-                          ),
-                        const SizedBox(height: 28),
-                      ],
-                    ),
+                final compact = bounds.maxHeight < 480;
+                final colors = Theme.of(context).colorScheme;
+                return ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    gutter,
+                    compact ? 8 : 24,
+                    gutter,
+                    24,
                   ),
+                  children: [
+                    Semantics(
+                      header: true,
+                      child: const Row(
+                        children: [
+                          ClockMark(),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Hear Clock',
+                              style: TextStyle(
+                                fontSize: 29,
+                                height: 1.15,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -.7,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: compact ? 10 : 24),
+                    if (settings != null) ...[
+                      ClockFace(settings: settings, platform: widget.platform),
+                      SizedBox(height: compact ? 16 : 28),
+                      const Divider(height: 1),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 10,
+                        ),
+                        leading: Icon(Icons.tune, color: colors.primary),
+                        title: const Text(
+                          'Settings',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text('${settings.variant.label} clock'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: _openSettings,
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 10,
+                        ),
+                        leading: Icon(
+                          Icons.widgets_outlined,
+                          color: colors.primary,
+                        ),
+                        title: const Text(
+                          'Add widget',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Touch and hold the widget to resize it.',
+                        ),
+                        trailing: const Icon(Icons.add),
+                        onTap: _pinning ? null : _addWidget,
+                      ),
+                      const Divider(height: 1),
+                    ] else if (_loadFailed) ...[
+                      const Text('Couldn’t load clock settings.'),
+                      TextButton(
+                        onPressed: _load,
+                        child: const Text('Try again'),
+                      ),
+                    ] else
+                      const Center(
+                        child: CircularProgressIndicator(
+                          semanticsLabel: 'Loading clock',
+                        ),
+                      ),
+                  ],
                 );
               },
             ),

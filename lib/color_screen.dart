@@ -15,7 +15,7 @@ class ColorSwatchMark extends StatelessWidget {
     decoration: BoxDecoration(
       color: color,
       borderRadius: ClockTheme.corner,
-      border: Border.all(color: ClockTheme.muted),
+      border: Border.all(color: Theme.of(context).colorScheme.outline),
     ),
   );
 }
@@ -77,6 +77,7 @@ class _ColorScreenState extends State<ColorScreen> {
   @override
   Widget build(BuildContext context) {
     final preview = widget.preview(_picked);
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: ClockTheme.settingsBar(context, widget.title),
       body: SafeArea(
@@ -104,14 +105,14 @@ class _ColorScreenState extends State<ColorScreen> {
                         selected: color.key == _picked,
                         showCheckmark: true,
                         shape: ClockTheme.shape,
-                        selectedColor: ClockTheme.accent,
-                        backgroundColor: ClockTheme.panel,
-                        checkmarkColor: ClockTheme.onAccent,
+                        selectedColor: scheme.primary,
+                        backgroundColor: scheme.surface,
+                        checkmarkColor: scheme.onPrimary,
                         labelStyle: TextStyle(
                           fontSize: 16,
                           color: color.key == _picked
-                              ? ClockTheme.onAccent
-                              : ClockTheme.ink,
+                              ? scheme.onPrimary
+                              : scheme.onSurface,
                         ),
                         onSelected: (_) => _choose(color.key),
                       ),
