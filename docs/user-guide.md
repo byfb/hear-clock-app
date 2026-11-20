@@ -30,9 +30,13 @@ Under **Color combinations**, choose white on black, black on white, yellow on b
 
 **Time format** controls both the display and the spoken time. Choose **Device** to follow the phone’s 12-hour or 24-hour setting. On Android 8 through 11, turning on the second hand for an analog home-screen widget keeps a notification visible while the hand is on.
 
-## Set the voice and speed
+## Choose what the clock says
 
-Open **Settings**, then **Voice**. Choose a language installed in your phone’s text-to-speech engine. Set **Speech speed** between 50% and 200%, then tap **Test voice** to hear a sample. If your language is missing, you can install voice data in Android’s text-to-speech settings. [Android speech settings](https://support.google.com/accessibility/android/answer/6006983)
+Open **Settings → Voice**. **Speak on tap** is on by default. Turn it off for a silent clock. If you use Android TalkBack, it can still read the time when you focus the clock.
+
+Turn on **Include today’s date** to hear the time followed by the weekday and full date. The date is off by default and uses the language you choose under **Speech language**.
+
+Choose an installed voice language and set **Speech speed** between 50% and 200%. Tap **Test voice** to hear your choices before saving. If your language is missing, you can install voice data in Android’s text-to-speech settings. [Android speech settings](https://support.google.com/accessibility/android/answer/6006983)
 
 Tap **Save settings** to apply both tabs to the app and every widget you’ve placed. To start over, tap **Restore all defaults** in **Appearance**, then **Save settings**. This resets the voice as well as the face.
 
