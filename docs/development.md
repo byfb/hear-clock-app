@@ -51,7 +51,7 @@ git tag -a vX.Y.Z -m "Hear Clock X.Y.Z"
 git push origin vX.Y.Z
 ```
 
-A new version tag starts the release workflow. It checks that the tagged commit is in the first-parent history of `release` and that the version matches `pubspec.yaml`. GitHub Actions then analyzes and tests the app, builds a universal APK, verifies its signature, version and license, and publishes it with the release notes. After it publishes, merge `release` back into `main`. [Release workflow](../.github/workflows/release.yml) · [GitHub Releases](https://github.com/byfb/hear-clock/releases)
+A new version tag starts the release workflow. It checks that the tagged commit is in the first-parent history of `release` and that the version matches `pubspec.yaml`. GitHub Actions then analyzes and tests the app, builds a universal APK, verifies its signature, version and license, and publishes it with the release notes. After it publishes, merge `release` back into `main`. [Release workflow](../.github/workflows/release.yml) · [GitHub Releases](https://github.com/byfb/hear-clock-app/releases)
 
 The workflow reads the base64-encoded PKCS12 keystore from the `ANDROID_SIGNING_KEYSTORE` Actions secret and its password from `ANDROID_SIGNING_PASSWORD`. For a local release test, omit `--prepare` to build an APK in `build/releases/` before recording the version. Add `--dry-run` to preview a version change.
 

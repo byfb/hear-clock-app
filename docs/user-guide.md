@@ -2,7 +2,7 @@
 
 ## Put the clock on your home screen
 
-1. On a phone running Android 8.0 or later, sign in to GitHub with an account that can read this private repository. Under **Assets** on the latest release, download the APK and open it to install Hear Clock. [Latest Android release](https://github.com/byfb/hear-clock/releases/latest)
+1. On a phone running Android 8.0 or later, sign in to GitHub with an account that can read this private repository. Under **Assets** on the latest release, download the APK and open it to install Hear Clock. [Latest Android release](https://github.com/byfb/hear-clock-app/releases/latest)
 2. Open Hear Clock, tap **Add widget**, and confirm. If your launcher uses a widget picker, touch and hold an empty spot on the home screen, open **Widgets**, and drag **Hear Clock** into place.
 3. To resize the clock, touch and hold it, lift your finger, then drag the handles around its edge. [Android’s guide to adding and resizing widgets](https://support.google.com/android/answer/9450271)
 

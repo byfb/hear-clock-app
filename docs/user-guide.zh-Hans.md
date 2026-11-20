@@ -2,7 +2,7 @@
 
 ## 把时钟放到桌面上
 
-1. 在运行 Android 8.0 或更高版本的手机上，登录有权访问这个私有仓库的 GitHub 账号。打开最新版本页面，在 **Assets** 下下载 APK，打开文件即可安装。[下载最新 Android 版](https://github.com/byfb/hear-clock/releases/latest)
+1. 在运行 Android 8.0 或更高版本的手机上，登录有权访问这个私有仓库的 GitHub 账号。打开最新版本页面，在 **Assets** 下下载 APK，打开文件即可安装。[下载最新 Android 版](https://github.com/byfb/hear-clock-app/releases/latest)
 2. 打开 Hear Clock，点 **添加小组件**并确认。也可以长按桌面空白处，打开小组件列表，把 **Hear Clock** 拖到想放的位置。
 3. 要调整大小，长按时钟，松开手指，再拖动边框上的圆点。[Android 小组件使用说明](https://support.google.com/android/answer/9450271?hl=zh-Hans)
 

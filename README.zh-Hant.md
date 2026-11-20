@@ -2,7 +2,7 @@
 
 輕點 Android 主畫面上的時鐘，就能聽到現在幾點。這個時鐘小工具可以調整大小，方便盲人和低視能人士使用。
 
-[下載 APK](https://github.com/byfb/hear-clock/releases/latest) · [English](README.md) · [简体中文](README.zh-Hans.md)
+[下載 APK](https://github.com/byfb/hear-clock-app/releases/latest) · [English](README.md) · [简体中文](README.zh-Hans.md)
 
 ![手指輕點顯示 8:24 的時鐘，聲波從手機兩側傳出。](docs/images/hear-clock-banner.webp)
 

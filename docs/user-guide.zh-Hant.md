@@ -2,7 +2,7 @@
 
 ## 將時鐘加入主畫面
 
-1. 在執行 Android 8.0 或以上版本的手機上，登入有權存取此私人儲存庫的 GitHub 帳戶。前往最新版本，在 **Assets** 下下載 APK，開啟檔案即可安裝。[下載最新 Android 版](https://github.com/byfb/hear-clock/releases/latest)
+1. 在執行 Android 8.0 或以上版本的手機上，登入有權存取此私人儲存庫的 GitHub 帳戶。前往最新版本，在 **Assets** 下下載 APK，開啟檔案即可安裝。[下載最新 Android 版](https://github.com/byfb/hear-clock-app/releases/latest)
 2. 開啟 Hear Clock，點選 **加入小工具**並確認。也可以長按主畫面的空白處，開啟小工具清單，再將 **Hear Clock** 拖到想放的位置。
 3. 要調整大小，長按時鐘後放開手指，再拖動邊框上的圓點。[Android 的小工具操作說明](https://support.google.com/android/answer/9450271?hl=zh-Hant)
 
