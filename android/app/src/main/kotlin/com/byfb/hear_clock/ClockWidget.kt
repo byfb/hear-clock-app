@@ -7,6 +7,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 
 class ClockWidget : AppWidgetProvider() {
@@ -21,10 +23,17 @@ class ClockWidget : AppWidgetProvider() {
             super.onReceive(context, intent)
             return
         }
-        val pending = goAsync()
-        TimeSpeaker.read(context) { error ->
+        val settings = ClockSettings.load(context)
+        if (!settings.speakOnTap) return
+        var pending: PendingResult? = goAsync()
+        val handler = Handler(Looper.getMainLooper())
+        val releaseBroadcast = Runnable { pending?.finish(); pending = null }
+        // Let longer readings finish in the speech engine after the receiver's deadline.
+        handler.postDelayed(releaseBroadcast, 8_000)
+        TimeSpeaker.read(context, settings) { error ->
+            handler.removeCallbacks(releaseBroadcast)
+            releaseBroadcast.run()
             if (error != null) Toast.makeText(context, AppLanguages.localized(context).getString(error), Toast.LENGTH_LONG).show()
-            pending.finish()
         }
     }
 

@@ -3,6 +3,9 @@ package com.byfb.hear_clock
 import android.content.Context
 import android.graphics.Color
 import android.text.format.DateFormat
+import java.text.DateFormat as LocalizedDateFormat
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 internal data class HandStyle(val color: Int, val length: Int, val weight: String)
@@ -34,6 +37,8 @@ internal class ClockSettings private constructor(private val values: Map<*, *>) 
         "stacked" -> false
         else -> values["seconds"] == true
     }
+    val speakOnTap = values["speech.enabled"] != false
+    val includeDate = values["speech.includeDate"] == true
     val language = values["speech.language"] as? String ?: ""
     val speechRate = amount("speech.rate", 50..200, 100)
     private val format = values["format"] as? String ?: "device"
@@ -68,7 +73,14 @@ internal class ClockSettings private constructor(private val values: Map<*, *>) 
         editor.apply()
     }
 
-    fun uses24Hours(context: Context): Boolean = use24(AppLanguages.deviceUses24Hours(context))
+    fun spokenReading(at: Date, locale: Locale, system24: Boolean): String {
+        val time = SimpleDateFormat(pattern(locale, system24, spoken = true), locale)
+        val words = time.format(at)
+        if (!includeDate) return words
+        val date = LocalizedDateFormat.getDateInstance(LocalizedDateFormat.FULL, locale)
+        date.timeZone = time.timeZone
+        return words + "\n" + date.format(at)
+    }
 
     private fun use24(system24: Boolean): Boolean = when (format) {
         "h12" -> false

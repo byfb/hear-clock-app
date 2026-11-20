@@ -139,12 +139,20 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
     final label = time.period.isEmpty
         ? time.digits
         : strings.timeWithPeriod(time.digits, time.period);
+    final onTap = settings.speakOnTap ? _speak : null;
+    final actionLabel = settings.includeDate
+        ? strings.hearTimeAndDate
+        : strings.hearTime;
     return Semantics(
-      label: widget.compact ? strings.clockPreview : strings.hearTime,
+      label: widget.compact
+          ? strings.clockPreview
+          : settings.speakOnTap
+          ? actionLabel
+          : null,
       value: strings.localTime(label),
-      button: true,
-      onTap: _speak,
-      onTapHint: widget.compact ? strings.hearTime : null,
+      button: settings.speakOnTap,
+      onTap: onTap,
+      onTapHint: widget.compact && settings.speakOnTap ? actionLabel : null,
       excludeSemantics: true,
       child: Material(
         color: settings.face,
@@ -161,7 +169,7 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: _speak,
+          onTap: onTap,
           excludeFromSemantics: true,
           onFocusChange: (focused) => setState(() => _focused = focused),
           child: LayoutBuilder(
@@ -192,7 +200,7 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
                             stacked: settings.variant == FaceVariant.stacked,
                           ),
                   ),
-                  if (!compact) ...[
+                  if (!compact && settings.speakOnTap) ...[
                     Ink(
                       color: ClockTheme.accent,
                       child: Padding(
@@ -211,9 +219,7 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
-                                _speaking
-                                    ? strings.readingTime
-                                    : strings.hearTime,
+                                _speaking ? strings.speaking : actionLabel,
                                 style: const TextStyle(
                                   color: ClockTheme.onAccent,
                                   fontSize: 19,

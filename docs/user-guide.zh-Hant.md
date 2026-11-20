@@ -2,7 +2,7 @@
 
 ## 將時鐘加入主畫面
 
-1. 在執行 Android 8.0 或以上版本的手機上，登入有權存取此私人儲存庫的 GitHub 帳戶。前往最新版本，在 **Assets** 下下載 APK，開啟檔案即可安裝。[下載最新 Android 版](https://github.com/byfb/hear-clock/releases/latest)
+1. 在執行 Android 8.0 或以上版本的手機上，登入有權存取此私人儲存庫的 GitHub 帳戶。前往最新版本，在 **Assets** 下下載 APK，開啟檔案即可安裝。[下載最新 Android 版](https://github.com/byfb/hear-clock-app/releases/latest)
 2. 開啟 Hear Clock，點選 **加入小工具**並確認。也可以長按主畫面的空白處，開啟小工具清單，再將 **Hear Clock** 拖到想放的位置。
 3. 要調整大小，長按時鐘後放開手指，再拖動邊框上的圓點。[Android 的小工具操作說明](https://support.google.com/android/answer/9450271?hl=zh-Hant)
 
@@ -30,9 +30,13 @@
 
 **時間格式**同時影響顯示和報時。選擇 **跟隨系統**，即可沿用手機的 12 或 24 小時制。在 Android 8 至 11 上，主畫面指針時鐘啟用秒針期間，系統會持續顯示一則通知。
 
-## 調整報時語言和語速
+## 選擇報時內容
 
-在 **設定** 中點選 **語音**，選擇手機文字轉語音引擎已安裝的語言。**語速**可設為 50% 至 200%，點選 **試聽**即可聽聽效果。找不到想要的語言時，可到 Android 的文字轉語音設定安裝語音資料。[Android 語音設定說明](https://support.google.com/accessibility/android/answer/6006983?hl=zh-Hant)
+開啟 **設定 → 語音**。**點按報時**預設開啟。想讓時鐘靜音時，可以關掉它。使用 Android TalkBack 時，將焦點移到時鐘上，仍可聽到目前時間。
+
+開啟 **讀出今天的日期**，就能在時間之後聽到星期幾和完整日期。這項設定預設關閉，朗讀時會使用你選的**報時語言**。
+
+選擇手機已安裝的語言，將**語速**調至 50% 到 200% 之間。儲存前可點選 **試聽**聽聽效果。找不到想要的語言時，可到 Android 的文字轉語音設定安裝語音資料。[Android 語音設定說明](https://support.google.com/accessibility/android/answer/6006983?hl=zh-Hant)
 
 點選 **儲存設定**後，外觀和語音設定會套用到應用程式及主畫面上所有 Hear Clock 小工具。若要還原，在 **外觀** 點選 **還原所有預設值**，再點選 **儲存設定**。鐘面和語音都會回復預設值。
 

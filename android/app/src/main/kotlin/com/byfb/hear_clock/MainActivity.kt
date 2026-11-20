@@ -58,7 +58,9 @@ class MainActivity : FlutterActivity() {
                     if (values == null) {
                         result.error("settings", "Expected clock settings", null)
                     } else {
-                        ClockSettings.from(values).save(this)
+                        val settings = ClockSettings.from(values)
+                        settings.save(this)
+                        if (!settings.speakOnTap) TimeSpeaker.stop()
                         ClockWidget.refresh(this)
                         result.success(null)
                     }

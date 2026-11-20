@@ -2,7 +2,7 @@
 
 ## 把时钟放到桌面上
 
-1. 在运行 Android 8.0 或更高版本的手机上，登录有权访问这个私有仓库的 GitHub 账号。打开最新版本页面，在 **Assets** 下下载 APK，打开文件即可安装。[下载最新 Android 版](https://github.com/byfb/hear-clock/releases/latest)
+1. 在运行 Android 8.0 或更高版本的手机上，登录有权访问这个私有仓库的 GitHub 账号。打开最新版本页面，在 **Assets** 下下载 APK，打开文件即可安装。[下载最新 Android 版](https://github.com/byfb/hear-clock-app/releases/latest)
 2. 打开 Hear Clock，点 **添加小组件**并确认。也可以长按桌面空白处，打开小组件列表，把 **Hear Clock** 拖到想放的位置。
 3. 要调整大小，长按时钟，松开手指，再拖动边框上的圆点。[Android 小组件使用说明](https://support.google.com/android/answer/9450271?hl=zh-Hans)
 
@@ -30,9 +30,13 @@
 
 **时间格式**同时影响显示和报时。选择 **跟随系统**，即可沿用手机的 12 或 24 小时制。在 Android 8 至 11 上，桌面指针时钟开启秒针期间，系统会一直显示一条通知。
 
-## 设置报时语言和语速
+## 选择报时内容
 
-在 **设置** 中点 **语音**，选择手机文字转语音引擎已安装的语言。**语速**可设为 50% 到 200%，点 **试听**即可听到效果。找不到需要的语言时，可以在 Android 的文字转语音设置中安装语音数据。[Android 语音设置说明](https://support.google.com/accessibility/android/answer/6006983?hl=zh-Hans)
+打开 **设置 → 语音**。**点按报时**默认开启。想让时钟静音时，可以关掉它。使用 Android TalkBack 时，把焦点移到时钟上，仍可听到当前时间。
+
+打开 **读出今天的日期**，就能在时间之后听到星期几和完整日期。这项设置默认关闭，朗读时使用你选的**报时语言**。
+
+选择手机已安装的语言，将**语速**调到 50% 至 200% 之间。保存前可点 **试听**听听效果。找不到需要的语言时，可以在 Android 的文字转语音设置中安装语音数据。[Android 语音设置说明](https://support.google.com/accessibility/android/answer/6006983?hl=zh-Hans)
 
 点 **保存设置**，应用里的时钟和桌面上的所有 Hear Clock 小组件都会用上这套外观和语音。要恢复默认设置，在 **外观** 中点 **恢复所有默认设置**，再点 **保存设置**。钟面和语音都会恢复默认值。
 
