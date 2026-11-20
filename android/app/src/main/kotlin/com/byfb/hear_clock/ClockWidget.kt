@@ -21,8 +21,10 @@ class ClockWidget : AppWidgetProvider() {
             super.onReceive(context, intent)
             return
         }
+        val settings = ClockSettings.load(context)
+        if (!settings.speakOnTap) return
         val pending = goAsync()
-        TimeSpeaker.read(context) { error ->
+        TimeSpeaker.read(context, settings) { error ->
             if (error != null) Toast.makeText(context, AppLanguages.localized(context).getString(error), Toast.LENGTH_LONG).show()
             pending.finish()
         }

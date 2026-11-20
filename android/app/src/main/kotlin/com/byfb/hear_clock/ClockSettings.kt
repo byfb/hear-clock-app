@@ -34,6 +34,7 @@ internal class ClockSettings private constructor(private val values: Map<*, *>) 
         "stacked" -> false
         else -> values["seconds"] == true
     }
+    val speakOnTap = values["speech.enabled"] != false
     val language = values["speech.language"] as? String ?: ""
     val speechRate = amount("speech.rate", 50..200, 100)
     private val format = values["format"] as? String ?: "device"

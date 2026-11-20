@@ -343,32 +343,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
     key: const PageStorageKey('voice'),
     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
     children: [
-      ListTile(
-        title: Text(strings.speechLanguage),
-        subtitle: Text(_draft.language.displayName(strings)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: _pickLanguage,
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(strings.speakOnTap),
+        value: _draft.speakOnTap,
+        onChanged: (enabled) =>
+            setState(() => _draft = _draft.copyWith(speakOnTap: enabled)),
       ),
-      const Divider(height: 1),
-      const SizedBox(height: 24),
-      _PercentageSlider(
-        label: strings.speechSpeed,
-        value: _draft.speechRate,
-        min: 50,
-        max: 200,
-        divisions: 6,
-        onChanged: (v) =>
-            setState(() => _draft = _draft.copyWith(speechRate: v)),
-      ),
-      Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: OutlinedButton.icon(
-          icon: const Icon(Icons.volume_up_outlined),
-          label: Text(strings.testVoice),
-          onPressed: _testVoice,
+      if (_draft.speakOnTap) ...[
+        ListTile(
+          title: Text(strings.speechLanguage),
+          subtitle: Text(_draft.language.displayName(strings)),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: _pickLanguage,
         ),
-      ),
+        const Divider(height: 1),
+        const SizedBox(height: 24),
+        _PercentageSlider(
+          label: strings.speechSpeed,
+          value: _draft.speechRate,
+          min: 50,
+          max: 200,
+          divisions: 6,
+          onChanged: (v) =>
+              setState(() => _draft = _draft.copyWith(speechRate: v)),
+        ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.volume_up_outlined),
+            label: Text(strings.testVoice),
+            onPressed: _testVoice,
+          ),
+        ),
+      ],
     ],
   );
 

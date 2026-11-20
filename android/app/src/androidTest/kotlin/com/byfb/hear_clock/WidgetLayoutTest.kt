@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.view.View
+import android.widget.TextClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
@@ -23,8 +24,9 @@ class WidgetLayoutTest {
             host.setAppWidget(AppWidgetManager.INVALID_APPWIDGET_ID, info)
             host.setPadding(0, 0, 0, 0)
 
-            fun show(variant: String, size: String) {
-                val settings = ClockSettings.from(mapOf("variant" to variant, "size" to size, "stack.size" to size))
+            fun show(variant: String, size: String, speak: Boolean = true) {
+                val settings = ClockSettings.from(mapOf(
+                    "variant" to variant, "size" to size, "stack.size" to size, "speech.enabled" to speak))
                 host.updateAppWidget(WidgetFaces(context, settings).views())
             }
 
@@ -55,6 +57,17 @@ class WidgetLayoutTest {
             expectBounds(120, 240, .91, 1)
             show("stacked", "medium")
             expectBounds(120, 240, .74, 2)
+            for ((variant, size) in listOf("digital" to "small", "digital" to "large",
+                "stacked" to "medium", "analog" to "large")) {
+                for (speak in listOf(true, false, true)) {
+                    show(variant, size, speak)
+                    val clock = host.findViewById<TextClock>(R.id.widget_clock)
+                    assertTrue(clock.text.isNotEmpty())
+                    assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_YES, clock.importantForAccessibility)
+                    assertEquals(speak, clock.isClickable)
+                    assertEquals(speak, host.findViewById<View>(R.id.widget_surface).isClickable)
+                }
+            }
         }
     }
 }

@@ -19,6 +19,7 @@
   "saveError": "無法儲存設定，請再試一次。",
   "appearance": "外觀",
   "voice": "語音",
+  "speakOnTap": "點按報時",
   "saveSettings": "儲存設定",
   "saving": "正在儲存…",
   "restoreDefaults": "還原所有預設值",

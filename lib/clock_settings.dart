@@ -59,6 +59,7 @@ class ClockSettings {
     this.stacked = const DigitStyle(),
     this.dial = const DialStyle(),
     this.format = ClockFormat.device,
+    this.speakOnTap = true,
     this.language = SpeechLanguage.device,
     this.speechRate = 100,
   });
@@ -67,6 +68,7 @@ class ClockSettings {
   final DigitStyle digital, stacked;
   final DialStyle dial;
   final ClockFormat format;
+  final bool speakOnTap;
   final SpeechLanguage language;
   final int speechRate;
 
@@ -91,6 +93,7 @@ class ClockSettings {
       stacked: DigitStyle.decode(map, 'stack.'),
       dial: DialStyle.decode(map),
       format: map.enumValue('format', ClockFormat.values, ClockFormat.device),
+      speakOnTap: map['speech.enabled'] != false,
       language: tag is String && tag.isNotEmpty
           ? SpeechLanguage(
               tag,
@@ -107,6 +110,7 @@ class ClockSettings {
     ...stacked.encode('stack.'),
     ...dial.encode(),
     'format': format.name,
+    'speech.enabled': speakOnTap,
     'speech.language': language.tag,
     'speech.rate': speechRate,
   };
@@ -121,6 +125,7 @@ class ClockSettings {
     DigitStyle? stacked,
     DialStyle? dial,
     ClockFormat? format,
+    bool? speakOnTap,
     SpeechLanguage? language,
     int? speechRate,
   }) => ClockSettings(
@@ -129,6 +134,7 @@ class ClockSettings {
     stacked: stacked ?? this.stacked,
     dial: dial ?? this.dial,
     format: format ?? this.format,
+    speakOnTap: speakOnTap ?? this.speakOnTap,
     language: language ?? this.language,
     speechRate: speechRate ?? this.speechRate,
   );

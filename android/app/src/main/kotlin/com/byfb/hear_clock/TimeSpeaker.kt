@@ -55,8 +55,11 @@ internal object TimeSpeaker {
         }
     }
 
-    fun read(context: Context, settings: ClockSettings = ClockSettings.load(context), done: (Int?) -> Unit) {
-        current?.finish(null)
+    fun stop() { current?.finish(null) }
+
+    fun read(context: Context, settings: ClockSettings, done: (Int?) -> Unit) {
+        stop()
+        if (!settings.speakOnTap) { done(null); return }
         val app = context.applicationContext
         val locale = if (settings.language.isEmpty()) AppLanguages.deviceLocale(app)
             else Locale.forLanguageTag(settings.language)

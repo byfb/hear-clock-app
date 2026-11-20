@@ -139,12 +139,19 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
     final label = time.period.isEmpty
         ? time.digits
         : strings.timeWithPeriod(time.digits, time.period);
+    final onTap = settings.speakOnTap ? _speak : null;
     return Semantics(
-      label: widget.compact ? strings.clockPreview : strings.hearTime,
+      label: widget.compact
+          ? strings.clockPreview
+          : settings.speakOnTap
+          ? strings.hearTime
+          : null,
       value: strings.localTime(label),
-      button: true,
-      onTap: _speak,
-      onTapHint: widget.compact ? strings.hearTime : null,
+      button: settings.speakOnTap,
+      onTap: onTap,
+      onTapHint: widget.compact && settings.speakOnTap
+          ? strings.hearTime
+          : null,
       excludeSemantics: true,
       child: Material(
         color: settings.face,
@@ -161,7 +168,7 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: _speak,
+          onTap: onTap,
           excludeFromSemantics: true,
           onFocusChange: (focused) => setState(() => _focused = focused),
           child: LayoutBuilder(
@@ -192,7 +199,7 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
                             stacked: settings.variant == FaceVariant.stacked,
                           ),
                   ),
-                  if (!compact) ...[
+                  if (!compact && settings.speakOnTap) ...[
                     Ink(
                       color: ClockTheme.accent,
                       child: Padding(

@@ -532,6 +532,44 @@ void main() {
   );
 
   testWidgets(
+    'muting clock taps keeps a readable time and remembers the voice',
+    (tester) async {
+      final platform = _Platform()
+        ..saved = ClockSettings.fromMap({
+          'speech.language': 'fr-FR',
+          'speech.label': 'Français',
+          'speech.rate': 75,
+        });
+      expect(platform.saved.speakOnTap, isTrue);
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Settings');
+      await _tap(tester, 'Voice');
+      await _tap(tester, 'Speak on tap');
+      expect(find.text('Test voice'), findsNothing);
+      await _tap(tester, 'Save settings');
+      expect(platform.saved.toMap()['speech.enabled'], false);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(HearClockApp(platform: platform));
+      await tester.pumpAndSettle();
+      final clock = find.byType(ClockFace);
+      final node = tester.getSemantics(clock);
+      expect(node.value, startsWith('Local time, '));
+      expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+      expect(find.text('Hear the time'), findsNothing);
+      await tester.tap(clock);
+      expect(platform.readings, isEmpty);
+      await _tap(tester, 'Settings');
+      await _tap(tester, 'Voice');
+      await _tap(tester, 'Speak on tap');
+      await _tap(tester, 'Save settings');
+      await tester.tap(find.bySemanticsLabel('Hear the time'));
+      expect(platform.readings.single.language.tag, 'fr-FR');
+      expect(platform.readings.single.speechRate, 75);
+    },
+  );
+
+  testWidgets(
     'a voice preview uses the draft language and speed before saving',
     (tester) async {
       final platform = _Platform();

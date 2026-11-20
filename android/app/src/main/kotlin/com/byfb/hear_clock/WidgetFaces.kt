@@ -16,26 +16,30 @@ internal class WidgetFaces(private val context: Context, private val settings: C
     private val dial = if (settings.variant == "analog") DialArtwork(settings) else null
     // The launcher's live TextClock supplies digits and AM/PM in the phone's locale.
     private val locale = AppLanguages.deviceLocale(context)
-    private val speak = PendingIntent.getBroadcast(context, 0,
-        Intent(context, ClockWidget::class.java).setAction(ClockWidget.SPEAK),
-        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+
+    private fun layout(spoken: Int, silent: Int) = if (settings.speakOnTap) spoken else silent
 
     fun views(): RemoteViews {
         val (layout, fraction) = when {
-            dial != null -> R.layout.clock_analog to 1f
-            settings.size == "small" -> R.layout.clock_widget_small to .56f
-            settings.size == "medium" -> R.layout.clock_widget_medium to .74f
-            else -> R.layout.clock_widget to .91f
+            dial != null -> layout(R.layout.clock_analog, R.layout.clock_analog_silent) to 1f
+            settings.size == "small" -> layout(R.layout.clock_widget_small, R.layout.clock_widget_small_silent) to .56f
+            settings.size == "medium" -> layout(R.layout.clock_widget_medium, R.layout.clock_widget_medium_silent) to .74f
+            else -> layout(R.layout.clock_widget, R.layout.clock_widget_silent) to .91f
         }
         val view = RemoteViews(context.packageName, layout)
         view.setInt(R.id.widget_surface, "setBackgroundColor", settings.face)
-        view.setOnClickPendingIntent(R.id.widget_surface, speak)
+        if (settings.speakOnTap) {
+            val speak = PendingIntent.getBroadcast(context, 0,
+                Intent(context, ClockWidget::class.java).setAction(ClockWidget.SPEAK),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            view.setOnClickPendingIntent(R.id.widget_surface, speak)
+            view.setOnClickPendingIntent(R.id.widget_clock, speak)
+        }
         val short = settings.pattern(locale, false)
         val long = settings.pattern(locale, true)
-        // The transparent TextClock over a composed face is its one live, accessible action.
+        // The transparent TextClock remains readable by TalkBack even with speech off.
         view.setCharSequence(R.id.widget_clock, "setFormat12Hour", short)
         view.setCharSequence(R.id.widget_clock, "setFormat24Hour", long)
-        view.setOnClickPendingIntent(R.id.widget_clock, speak)
         if (dial != null) {
             dial.apply(view)
             return view

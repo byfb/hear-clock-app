@@ -38,6 +38,7 @@
   "saveError": "Couldn’t save these settings. Try again.",
   "appearance": "Appearance",
   "voice": "Voice",
+  "speakOnTap": "Speak on tap",
   "saveSettings": "Save settings",
   "saving": "Saving…",
   "restoreDefaults": "Restore all defaults",

@@ -19,6 +19,7 @@
   "saveError": "无法保存设置，请重试。",
   "appearance": "外观",
   "voice": "语音",
+  "speakOnTap": "点按报时",
   "saveSettings": "保存设置",
   "saving": "正在保存…",
   "restoreDefaults": "恢复所有默认设置",
