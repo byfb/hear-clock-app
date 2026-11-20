@@ -7,11 +7,10 @@ import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import java.text.Collator
-import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/** Owns one short utterance, including the lifetime of a launcher broadcast. */
+/** Owns the current clock reading until playback finishes or another tap replaces it. */
 internal object TimeSpeaker {
     private val main = Handler(Looper.getMainLooper())
     private var current: Request? = null
@@ -88,8 +87,7 @@ internal object TimeSpeaker {
                         request.finish(R.string.speech_error)
                         return@post
                     }
-                    val pattern = settings.pattern(spokenLocale, settings.uses24Hours(app), spoken = true)
-                    val words = SimpleDateFormat(pattern, spokenLocale).format(timeAtTap)
+                    val words = settings.spokenReading(timeAtTap, spokenLocale, AppLanguages.deviceUses24Hours(app))
                     engine.setAudioAttributes(
                         AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
                             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build(),
@@ -104,8 +102,13 @@ internal object TimeSpeaker {
                             main.post { request.finish(if (success) null else R.string.speech_error) }
                         }
                     })
-                    if (engine.speak(words, TextToSpeech.QUEUE_FLUSH, null, "local_time") ==
-                        TextToSpeech.ERROR) request.finish(R.string.speech_error)
+                    if (engine.speak(words, TextToSpeech.QUEUE_FLUSH, null, "local_time") == TextToSpeech.ERROR) {
+                        request.finish(R.string.speech_error)
+                        return@post
+                    }
+                    // A full date at the slowest speech rate can outlast engine initialization.
+                    main.removeCallbacks(request.timeout)
+                    main.postDelayed(request.timeout, 60_000)
                 }
             }
         } catch (_: RuntimeException) {

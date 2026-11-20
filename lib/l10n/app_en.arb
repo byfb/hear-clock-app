@@ -12,7 +12,8 @@
   "loadingClock": "Loading clock",
   "clockPreview": "Clock preview",
   "hearTime": "Hear the time",
-  "readingTime": "Reading time…",
+  "hearTimeAndDate": "Hear the time and date",
+  "speaking": "Speaking…",
   "localTime": "Local time, {time}",
   "@localTime": {
     "description": "Accessibility value announced when the clock receives focus.",
@@ -39,6 +40,7 @@
   "appearance": "Appearance",
   "voice": "Voice",
   "speakOnTap": "Speak on tap",
+  "includeDate": "Include today’s date",
   "saveSettings": "Save settings",
   "saving": "Saving…",
   "restoreDefaults": "Restore all defaults",

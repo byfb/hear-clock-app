@@ -351,6 +351,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             setState(() => _draft = _draft.copyWith(speakOnTap: enabled)),
       ),
       if (_draft.speakOnTap) ...[
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(strings.includeDate),
+          value: _draft.includeDate,
+          onChanged: (enabled) =>
+              setState(() => _draft = _draft.copyWith(includeDate: enabled)),
+        ),
         ListTile(
           title: Text(strings.speechLanguage),
           subtitle: Text(_draft.language.displayName(strings)),

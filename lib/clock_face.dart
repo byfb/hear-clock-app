@@ -140,18 +140,19 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
         ? time.digits
         : strings.timeWithPeriod(time.digits, time.period);
     final onTap = settings.speakOnTap ? _speak : null;
+    final actionLabel = settings.includeDate
+        ? strings.hearTimeAndDate
+        : strings.hearTime;
     return Semantics(
       label: widget.compact
           ? strings.clockPreview
           : settings.speakOnTap
-          ? strings.hearTime
+          ? actionLabel
           : null,
       value: strings.localTime(label),
       button: settings.speakOnTap,
       onTap: onTap,
-      onTapHint: widget.compact && settings.speakOnTap
-          ? strings.hearTime
-          : null,
+      onTapHint: widget.compact && settings.speakOnTap ? actionLabel : null,
       excludeSemantics: true,
       child: Material(
         color: settings.face,
@@ -218,9 +219,7 @@ class _ClockFaceState extends State<ClockFace> with WidgetsBindingObserver {
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
-                                _speaking
-                                    ? strings.readingTime
-                                    : strings.hearTime,
+                                _speaking ? strings.speaking : actionLabel,
                                 style: const TextStyle(
                                   color: ClockTheme.onAccent,
                                   fontSize: 19,

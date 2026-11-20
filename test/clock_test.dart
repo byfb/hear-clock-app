@@ -539,6 +539,7 @@ void main() {
           'speech.language': 'fr-FR',
           'speech.label': 'Français',
           'speech.rate': 75,
+          'speech.includeDate': true,
         });
       expect(platform.saved.speakOnTap, isTrue);
       await tester.pumpWidget(HearClockApp(platform: platform));
@@ -547,6 +548,7 @@ void main() {
       await _tap(tester, 'Voice');
       await _tap(tester, 'Speak on tap');
       expect(find.text('Test voice'), findsNothing);
+      expect(find.text('Include today’s date'), findsNothing);
       await _tap(tester, 'Save settings');
       expect(platform.saved.toMap()['speech.enabled'], false);
       await tester.pumpWidget(const SizedBox());
@@ -563,20 +565,23 @@ void main() {
       await _tap(tester, 'Voice');
       await _tap(tester, 'Speak on tap');
       await _tap(tester, 'Save settings');
-      await tester.tap(find.bySemanticsLabel('Hear the time'));
+      await tester.tap(find.bySemanticsLabel('Hear the time and date'));
       expect(platform.readings.single.language.tag, 'fr-FR');
       expect(platform.readings.single.speechRate, 75);
+      expect(platform.readings.single.includeDate, isTrue);
     },
   );
 
   testWidgets(
-    'a voice preview uses the draft language and speed before saving',
+    'voice previews and saved clock taps use the chosen date, language and speed',
     (tester) async {
       final platform = _Platform();
+      expect(ClockSettings.fromMap({}).includeDate, isFalse);
       await tester.pumpWidget(HearClockApp(platform: platform));
       await tester.pumpAndSettle();
       await _tap(tester, 'Settings');
       await _tap(tester, 'Voice');
+      await _tap(tester, 'Include today’s date');
       await _tap(tester, 'Speech language');
       await _tap(tester, 'French (France)');
       await tester.ensureVisible(find.byType(Slider));
@@ -592,10 +597,23 @@ void main() {
       await _tap(tester, 'Test voice');
       expect(platform.readings.last.language.tag, 'fr-FR');
       expect(platform.readings.last.speechRate, 75);
+      expect(platform.readings.last.includeDate, isTrue);
       expect(platform.saved.language.tag, isEmpty);
+      expect(platform.saved.includeDate, isFalse);
       await _tap(tester, 'Save settings');
       expect(platform.saved.toMap()['speech.rate'], 75);
       expect(platform.saved.toMap()['speech.language'], 'fr-FR');
+      expect(platform.saved.toMap()['speech.includeDate'], isTrue);
+      final action = find.bySemanticsLabel('Hear the time and date');
+      expect(tester.getSemantics(action).value, startsWith('Local time, '));
+      await tester.tap(action);
+      expect(platform.readings.last.includeDate, isTrue);
+      await _tap(tester, 'Settings');
+      await _tap(tester, 'Voice');
+      await _tap(tester, 'Include today’s date');
+      await _tap(tester, 'Save settings');
+      await tester.tap(find.bySemanticsLabel('Hear the time'));
+      expect(platform.readings.last.includeDate, isFalse);
     },
   );
 
