@@ -11,4 +11,4 @@ Tap the clock on your Android home screen to hear the local time. Hear Clock is 
 
 Install Hear Clock on Android 8.0 or later. Open it, tap **Add widget**, and confirm. With TalkBack, focus the clock and double-tap to hear the time.
 
-[Clock faces and voice settings](docs/user-guide.md) · [Accessibility research](docs/accessibility-research.md) · [Build and release](docs/development.md) · [GPL-3.0-only](LICENSE)
+[Clock faces and voice settings](docs/user-guide.md) · [Accessibility research](docs/accessibility-research.md) · [Build and release](docs/development.md) · [Contributing](CONTRIBUTING.md) · [GPL-3.0-only](LICENSE)

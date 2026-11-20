@@ -11,4 +11,4 @@
 
 在 Android 8.0 或以上版本安裝 Hear Clock。開啟後，點選 **加入小工具**並確認。使用 TalkBack 時，先將焦點移到時鐘，再輕點兩下即可報時。
 
-[時鐘外觀與報時語音設定](docs/user-guide.zh-Hant.md) · [無障礙設計研究（英文）](docs/accessibility-research.md) · [建置與發佈（英文）](docs/development.md) · [GPL-3.0-only 授權條款](LICENSE)
+[時鐘外觀與報時語音設定](docs/user-guide.zh-Hant.md) · [無障礙設計研究（英文）](docs/accessibility-research.md) · [建置與發佈（英文）](docs/development.md) · [貢獻指南（英文）](CONTRIBUTING.md) · [GPL-3.0-only 授權條款](LICENSE)
