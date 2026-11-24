@@ -22,8 +22,6 @@
   "voice": "語音",
   "speakOnTap": "點按報時",
   "includeDate": "讀出今天的日期",
-  "saveSettings": "儲存設定",
-  "saving": "正在儲存…",
   "restoreDefaults": "還原所有預設值",
   "appLanguage": "介面語言",
   "systemLanguage": "跟隨系統語言",

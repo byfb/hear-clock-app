@@ -36,8 +36,8 @@ Open **Settings → Voice**. **Speak on tap** is on by default. Turn it off for 
 
 Turn on **Include today’s date** to hear the time followed by the weekday and full date. The date is off by default and uses the language you choose under **Speech language**.
 
-Choose an installed voice language and set **Speech speed** between 50% and 200%. Tap **Test voice** to hear your choices before saving. If your language is missing, you can install voice data in Android’s text-to-speech settings. [Android speech settings](https://support.google.com/accessibility/android/answer/6006983)
+Choose an installed voice language and set **Speech speed** between 50% and 200%. Tap **Test voice** to hear how the clock sounds. If your language is missing, you can install voice data in Android’s text-to-speech settings. [Android speech settings](https://support.google.com/accessibility/android/answer/6006983)
 
-Tap **Save settings** to apply both tabs to the app and every widget you’ve placed. To start over, tap **Restore all defaults** in **Appearance**, then **Save settings**. This resets the voice as well as the face.
+Appearance and voice changes apply automatically to the app and every widget you’ve placed. To reset the clock face and voice, tap **Restore all defaults** in **Appearance**.
 
 [Back to Hear Clock](../README.md)
