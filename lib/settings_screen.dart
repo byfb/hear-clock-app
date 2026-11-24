@@ -13,42 +13,21 @@ import 'l10n/generated/app_localizations.dart';
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     super.key,
-    required this.initial,
+    required this.settings,
     required this.platform,
-    required this.onSave,
+    required this.onChanged,
   });
-  final ClockSettings initial;
+  final ClockSettings settings;
   final ClockPlatform platform;
-  final Future<void> Function(ClockSettings) onSave;
+  final ValueChanged<ClockSettings> onChanged;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late ClockSettings _draft = widget.initial;
-  var _saving = false;
-  var _saveFailed = false;
+  ClockSettings get _settings => widget.settings;
   AppLocalizations get strings => AppLocalizations.of(context);
-
-  Future<void> _save() async {
-    if (_saving) return;
-    setState(() {
-      _saving = true;
-      _saveFailed = false;
-    });
-    try {
-      await widget.onSave(_draft);
-      if (mounted) Navigator.pop(context);
-    } on PlatformException {
-      if (mounted) {
-        setState(() {
-          _saveFailed = true;
-          _saving = false;
-        });
-      }
-    }
-  }
 
   ClockHand _hand = ClockHand.hour;
 
@@ -71,33 +50,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       );
-      if (mounted && color != null) setState(() => _draft = change(color));
+      if (mounted && color != null) widget.onChanged(change(color));
     },
   );
 
   void _editDigits(DigitStyle style) =>
-      setState(() => _draft = _draft.withText(style));
+      widget.onChanged(_settings.withText(style));
 
   List<Widget> _digitControls() {
-    final style = _draft.text;
-    final stacked = _draft.variant == FaceVariant.stacked;
+    final style = _settings.text;
+    final stacked = _settings.variant == FaceVariant.stacked;
     return [
       _color(
         (s) => stacked ? s.hourDigitColor : s.digitColor,
         style.digits,
-        (c) => _draft.withText(style.copyWith(digits: c)),
+        (c) => _settings.withText(style.copyWith(digits: c)),
       ),
       if (stacked)
         _color(
           (s) => s.minuteDigitColor,
           style.minuteColor,
-          (c) => _draft.withText(style.copyWith(minuteColor: c)),
+          (c) => _settings.withText(style.copyWith(minuteColor: c)),
         ),
       const Divider(height: 1),
       _color(
         (s) => s.backgroundColor,
         style.face,
-        (c) => _draft.withText(style.copyWith(face: c)),
+        (c) => _settings.withText(style.copyWith(face: c)),
       ),
       const Divider(height: 1),
       _Choices<DigitSize>(
@@ -137,24 +116,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   List<Widget> _dialControls() {
-    final dial = _draft.dial;
+    final dial = _settings.dial;
     final selected = !dial.seconds && _hand == ClockHand.second
         ? ClockHand.hour
         : _hand;
     final hand = dial.hand(selected);
     final title = strings.handName(selected.name);
     void update(DialStyle next) =>
-        setState(() => _draft = _draft.copyWith(dial: next));
+        widget.onChanged(_settings.copyWith(dial: next));
     return [
       _color(
         (s) => s.backgroundColor,
         dial.face,
-        (c) => _draft.copyWith(dial: dial.copyWith(face: c)),
+        (c) => _settings.copyWith(dial: dial.copyWith(face: c)),
       ),
       _color(
         (s) => s.markingColor,
         dial.marks,
-        (c) => _draft.copyWith(dial: dial.copyWith(marks: c)),
+        (c) => _settings.copyWith(dial: dial.copyWith(marks: c)),
       ),
       _Choices<DialLabels>(
         label: strings.dialMarkings,
@@ -184,7 +163,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _color(
         (s) => s.handColor(s.handName(selected.name)),
         hand.color,
-        (c) => _draft.copyWith(
+        (c) => _settings.copyWith(
           dial: dial.withHand(selected, hand.copyWith(color: c)),
         ),
       ),
@@ -250,12 +229,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       MaterialPageRoute(
         builder: (_) => SpeechLanguageScreen(
           platform: widget.platform,
-          selected: _draft.language,
+          selected: _settings.language,
         ),
       ),
     );
     if (mounted && language != null) {
-      setState(() => _draft = _draft.copyWith(language: language));
+      widget.onChanged(_settings.copyWith(language: language));
     }
   }
 
@@ -263,11 +242,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final selected = await Navigator.push<ClockPalette>(
       context,
       MaterialPageRoute(
-        builder: (_) => ColorCombinationsScreen(settings: _draft),
+        builder: (_) => ColorCombinationsScreen(settings: _settings),
       ),
     );
     if (mounted && selected != null) {
-      setState(() => _draft = selected.apply(_draft));
+      widget.onChanged(selected.apply(_settings));
     }
   }
 
@@ -275,7 +254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     key: const PageStorageKey('appearance'),
     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
     children: [
-      ClockFace(compact: true, settings: _draft, platform: widget.platform),
+      ClockFace(compact: true, settings: _settings, platform: widget.platform),
       ListTile(
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.language),
@@ -287,16 +266,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _Choices<FaceVariant>(
         label: strings.clockFace,
         values: FaceVariant.values,
-        selected: _draft.variant,
+        selected: _settings.variant,
         name: (v) => strings.faceName(v.name),
-        onChange: (v) => setState(() => _draft = _draft.copyWith(variant: v)),
+        onChange: (v) => widget.onChanged(_settings.copyWith(variant: v)),
       ),
       const SizedBox(height: 12),
       ListTile(
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.contrast),
         title: Text(strings.colorCombinations),
-        subtitle: Text(switch (ClockPalette.current(_draft)) {
+        subtitle: Text(switch (ClockPalette.current(_settings)) {
           final palette? => strings.paletteName(palette.name),
           null => strings.customColors,
         }),
@@ -304,8 +283,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: _pickPalette,
       ),
       const Divider(height: 1),
-      ContrastNote(_draft),
-      if (_draft.variant == FaceVariant.analog)
+      ContrastNote(_settings),
+      if (_settings.variant == FaceVariant.analog)
         ..._dialControls()
       else
         ..._digitControls(),
@@ -313,15 +292,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _Choices<ClockFormat>(
         label: strings.timeFormat,
         values: ClockFormat.values,
-        selected: _draft.format,
+        selected: _settings.format,
         name: (v) => strings.formatName(v.name),
-        onChange: (v) => setState(() => _draft = _draft.copyWith(format: v)),
+        onChange: (v) => widget.onChanged(_settings.copyWith(format: v)),
       ),
       const Divider(height: 24),
       Align(
         alignment: AlignmentDirectional.centerStart,
         child: TextButton(
-          onPressed: () => setState(() => _draft = const ClockSettings()),
+          onPressed: () => widget.onChanged(const ClockSettings()),
           child: Text(strings.restoreDefaults),
         ),
       ),
@@ -330,7 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _testVoice() async {
     try {
-      await widget.platform.speak(_draft);
+      await widget.platform.speak(_settings);
     } on PlatformException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -346,21 +325,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
         title: Text(strings.speakOnTap),
-        value: _draft.speakOnTap,
+        value: _settings.speakOnTap,
         onChanged: (enabled) =>
-            setState(() => _draft = _draft.copyWith(speakOnTap: enabled)),
+            widget.onChanged(_settings.copyWith(speakOnTap: enabled)),
       ),
-      if (_draft.speakOnTap) ...[
+      if (_settings.speakOnTap) ...[
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(strings.includeDate),
-          value: _draft.includeDate,
+          value: _settings.includeDate,
           onChanged: (enabled) =>
-              setState(() => _draft = _draft.copyWith(includeDate: enabled)),
+              widget.onChanged(_settings.copyWith(includeDate: enabled)),
         ),
         ListTile(
           title: Text(strings.speechLanguage),
-          subtitle: Text(_draft.language.displayName(strings)),
+          subtitle: Text(_settings.language.displayName(strings)),
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
           trailing: const Icon(Icons.chevron_right),
           onTap: _pickLanguage,
@@ -369,12 +348,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 24),
         _PercentageSlider(
           label: strings.speechSpeed,
-          value: _draft.speechRate,
+          value: _settings.speechRate,
           min: 50,
           max: 200,
           divisions: 6,
-          onChanged: (v) =>
-              setState(() => _draft = _draft.copyWith(speechRate: v)),
+          onChanged: (v) => widget.onChanged(_settings.copyWith(speechRate: v)),
         ),
         Align(
           alignment: AlignmentDirectional.centerStart,
@@ -423,11 +401,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: TabBarView(children: [_appearance(), _voice()]),
             ),
           ),
-        ),
-        bottomNavigationBar: _SaveBar(
-          label: _saving ? strings.saving : strings.saveSettings,
-          onTap: _saving ? null : _save,
-          error: _saveFailed ? strings.saveError : null,
         ),
       ),
     );
@@ -551,44 +524,6 @@ class _Choices<T> extends StatelessWidget {
           ],
         ),
       ],
-    ),
-  );
-}
-
-class _SaveBar extends StatelessWidget {
-  const _SaveBar({required this.label, required this.onTap, this.error});
-  final String label;
-  final VoidCallback? onTap;
-  final String? error;
-
-  @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
-      child: Align(
-        heightFactor: 1,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (error != null)
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ),
-              FilledButton(onPressed: onTap, child: Text(label)),
-            ],
-          ),
-        ),
-      ),
     ),
   );
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show SemanticsAction;
 
 import 'package:flutter/material.dart';
@@ -24,6 +25,7 @@ class _Platform extends ClockPlatform {
   Future<void> setAppLanguage(AppLanguage language) async =>
       interfaceLanguage = language;
   ClockSettings saved = const ClockSettings();
+  Future<void>? nextSave;
   final readings = <ClockSettings>[];
   var failSpeech = false;
   var pins = 0;
@@ -31,7 +33,13 @@ class _Platform extends ClockPlatform {
   @override
   Future<ClockSettings> load() async => saved;
   @override
-  Future<void> save(ClockSettings settings) async => saved = settings;
+  Future<void> save(ClockSettings settings) async {
+    final pending = nextSave;
+    nextSave = null;
+    if (pending != null) await pending;
+    saved = settings;
+  }
+
   @override
   Future<void> speak(ClockSettings settings) async {
     if (failSpeech) {
@@ -77,6 +85,11 @@ Future<void> _tap(
   await tester.ensureVisible(target);
   await tester.pumpAndSettle();
   await tester.tap(target);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _back(WidgetTester tester) async {
+  await tester.binding.handlePopRoute();
   await tester.pumpAndSettle();
 }
 
@@ -168,7 +181,7 @@ void main() {
   );
 
   testWidgets(
-    'switching the interface language preserves a draft, voice, and clock settings',
+    'switching the interface language preserves the voice and clock face',
     (tester) async {
       tester.view.physicalSize = const Size(320, 640);
       tester.view.devicePixelRatio = 1;
@@ -200,7 +213,8 @@ void main() {
       expect(platform.readings.single.variant, FaceVariant.analog);
       expect(platform.readings.single.language.tag, 'fr-FR');
       expect(platform.readings.single.speechRate, 75);
-      await _tap(tester, '儲存設定');
+      expect(platform.saved.variant, FaceVariant.analog);
+      await _back(tester);
       expect(find.text('指針時鐘'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(HearClockApp(platform: platform));
@@ -355,7 +369,64 @@ void main() {
     expect(ClockPalette.current(unreadable), isNull);
   });
 
-  testWidgets('switching faces preserves each set of digits after saving', (
+  testWidgets('rapid edits persist silently across settings visits', (
+    tester,
+  ) async {
+    final firstSave = Completer<void>();
+    final platform = _Platform()..nextSave = firstSave.future;
+    await tester.pumpWidget(HearClockApp(platform: platform));
+    await tester.pumpAndSettle();
+    await _tap(tester, 'Settings');
+    expect(find.text('Save settings'), findsNothing);
+    await _tap(tester, 'Analog');
+    await _tap(tester, 'Voice');
+    await _tap(tester, 'Include today’s date');
+    await _back(tester);
+    final clock = tester.widget<ClockFace>(find.byType(ClockFace));
+    expect(clock.settings.variant, FaceVariant.analog);
+    expect(clock.settings.includeDate, isTrue);
+    await _tap(tester, 'Settings');
+    await _tap(tester, 'Stacked');
+    expect(platform.saved.variant, FaceVariant.digital);
+
+    firstSave.complete();
+    await tester.pumpAndSettle();
+    expect(platform.saved.variant, FaceVariant.stacked);
+    expect(platform.saved.includeDate, isTrue);
+    expect(find.text('Clock settings'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
+    expect(platform.readings, isEmpty);
+  });
+
+  testWidgets('a failed edit restores the saved choice and can be retried', (
+    tester,
+  ) async {
+    final platform = _Platform();
+    await tester.pumpWidget(HearClockApp(platform: platform));
+    await tester.pumpAndSettle();
+    await _tap(tester, 'Settings');
+    await _tap(tester, 'Stacked');
+    final failedSave = Completer<void>();
+    platform.nextSave = failedSave.future;
+    await _tap(tester, 'Analog');
+    failedSave.completeError(PlatformException(code: 'settings'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Couldn’t save these settings. Try again.'),
+      findsOneWidget,
+    );
+    expect(platform.saved.variant, FaceVariant.stacked);
+    expect(
+      tester
+          .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Stacked'))
+          .selected,
+      isTrue,
+    );
+    await _tap(tester, 'Analog');
+    expect(platform.saved.variant, FaceVariant.analog);
+  });
+
+  testWidgets('switching faces preserves each set of digits automatically', (
     tester,
   ) async {
     final platform = _Platform()
@@ -371,7 +442,6 @@ void main() {
     await _tap(tester, 'Use color');
     await _tap(tester, 'Small');
     await _tap(tester, 'Leading zero in 12-hour time');
-    await _tap(tester, 'Save settings');
     expect(platform.saved.variant, FaceVariant.stacked);
     expect(platform.saved.digital.font, DigitFont.serif);
     expect(platform.saved.digital.seconds, isTrue);
@@ -379,9 +449,9 @@ void main() {
     expect(rgb(platform.saved.stacked.minuteColor), 0xa9edc2);
     expect(platform.saved.stacked.padHour, isTrue);
     expect(platform.saved.seconds, isFalse);
+    await _back(tester);
     await _tap(tester, 'Settings');
     await _tap(tester, 'Digital');
-    await _tap(tester, 'Save settings');
     expect(platform.saved.seconds, isTrue);
     expect(rgb(platform.saved.digital.digits), 0xf1c04a);
     expect(rgb(platform.saved.stacked.minuteColor), 0xa9edc2);
@@ -419,13 +489,13 @@ void main() {
     tester.widget<Slider>(length).onChanged!(65);
     await tester.pump();
     await _tap(tester, 'Bold');
-    await _tap(tester, 'Save settings');
     expect(platform.saved.dial.labels, DialLabels.numbers);
     expect(platform.saved.dial.hour.length, 55);
     expect(platform.saved.dial.minute.weight, HandWeight.regular);
     expect(platform.saved.dial.second.length, 65);
     expect(platform.saved.dial.second.weight, HandWeight.bold);
     expect(rgb(platform.saved.dial.second.color), 0xffdd59);
+    await _back(tester);
     final clock = find.bySemanticsLabel('Hear the time');
     expect(clock, findsOneWidget);
     expect(
@@ -485,7 +555,7 @@ void main() {
   );
 
   testWidgets(
-    'custom colors and typography save together and survive reopening the app',
+    'custom colors and typography autosave and survive reopening the app',
     (tester) async {
       final platform = _Platform();
       await tester.pumpWidget(HearClockApp(platform: platform));
@@ -495,8 +565,10 @@ void main() {
       await tester.enterText(find.byType(TextField), 'XYZ');
       await _tap(tester, 'Use color');
       expect(find.textContaining('Enter six hex digits'), findsOneWidget);
+      expect(platform.saved.toMap(), const ClockSettings().toMap());
       await tester.enterText(find.byType(TextField), '#f1c04a');
       await _tap(tester, 'Use color');
+      expect(rgb(platform.saved.digital.digits), 0xf1c04a);
       await _tap(tester, 'Background color');
       await _tap(tester, 'Navy');
       await _tap(tester, 'Use color');
@@ -509,8 +581,6 @@ void main() {
         scrollable: find.byType(Scrollable).last,
       );
       await _tap(tester, '24-hour');
-      expect(platform.saved.toMap(), const ClockSettings().toMap());
-      await _tap(tester, 'Save settings');
       final expected = {
         ...const ClockSettings().toMap(),
         'digits': 0xf1c04a,
@@ -549,7 +619,6 @@ void main() {
       await _tap(tester, 'Speak on tap');
       expect(find.text('Test voice'), findsNothing);
       expect(find.text('Include today’s date'), findsNothing);
-      await _tap(tester, 'Save settings');
       expect(platform.saved.toMap()['speech.enabled'], false);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(HearClockApp(platform: platform));
@@ -564,7 +633,7 @@ void main() {
       await _tap(tester, 'Settings');
       await _tap(tester, 'Voice');
       await _tap(tester, 'Speak on tap');
-      await _tap(tester, 'Save settings');
+      await _back(tester);
       await tester.tap(find.bySemanticsLabel('Hear the time and date'));
       expect(platform.readings.single.language.tag, 'fr-FR');
       expect(platform.readings.single.speechRate, 75);
@@ -598,12 +667,10 @@ void main() {
       expect(platform.readings.last.language.tag, 'fr-FR');
       expect(platform.readings.last.speechRate, 75);
       expect(platform.readings.last.includeDate, isTrue);
-      expect(platform.saved.language.tag, isEmpty);
-      expect(platform.saved.includeDate, isFalse);
-      await _tap(tester, 'Save settings');
       expect(platform.saved.toMap()['speech.rate'], 75);
       expect(platform.saved.toMap()['speech.language'], 'fr-FR');
       expect(platform.saved.toMap()['speech.includeDate'], isTrue);
+      await _back(tester);
       final action = find.bySemanticsLabel('Hear the time and date');
       expect(tester.getSemantics(action).value, startsWith('Local time, '));
       await tester.tap(action);
@@ -611,7 +678,7 @@ void main() {
       await _tap(tester, 'Settings');
       await _tap(tester, 'Voice');
       await _tap(tester, 'Include today’s date');
-      await _tap(tester, 'Save settings');
+      await _back(tester);
       await tester.tap(find.bySemanticsLabel('Hear the time'));
       expect(platform.readings.last.includeDate, isFalse);
     },
@@ -634,12 +701,11 @@ void main() {
     await _tap(tester, 'White');
     await _tap(tester, 'Use color');
     expect(find.textContaining('Low contrast'), findsOneWidget);
-    await _tap(tester, 'Save settings');
     expect(rgb(platform.saved.face), 0xffffff);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('presets and voice share a draft at 200 percent text size', (
+  testWidgets('presets, voice and defaults autosave at 200 percent text size', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(320, 640);
@@ -664,11 +730,11 @@ void main() {
       ClockPalette.current(platform.readings.single),
       ClockPalette.blackOnWhite,
     );
-    expect(ClockPalette.current(platform.saved), ClockPalette.original);
-    await _tap(tester, 'Appearance');
-    await _tap(tester, 'Save settings');
     expect(platform.saved.language.tag, 'fr-FR');
     expect(ClockPalette.current(platform.saved), ClockPalette.blackOnWhite);
+    await _tap(tester, 'Appearance');
+    await _tap(tester, 'Restore all defaults');
+    expect(platform.saved.toMap(), const ClockSettings().toMap());
     expect(tester.takeException(), isNull);
   });
 

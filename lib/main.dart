@@ -109,7 +109,9 @@ class _Home extends StatefulWidget {
 }
 
 class _HomeState extends State<_Home> {
-  ClockSettings? _settings;
+  final _settings = ValueNotifier<ClockSettings?>(null);
+  late ClockSettings _lastSaved;
+  Future<void> _saving = Future<void>.value();
   var _loadFailed = false;
   var _pinning = false;
 
@@ -119,26 +121,55 @@ class _HomeState extends State<_Home> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _settings.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     setState(() => _loadFailed = false);
     try {
       final value = await widget.platform.load();
-      if (mounted) setState(() => _settings = value);
+      if (mounted) {
+        _lastSaved = value;
+        _settings.value = value;
+      }
     } on PlatformException {
       if (mounted) setState(() => _loadFailed = true);
+    }
+  }
+
+  void _changeSettings(ClockSettings value) {
+    _settings.value = value;
+    _saving = _saving.then((_) => _saveIfCurrent(value));
+  }
+
+  Future<void> _saveIfCurrent(ClockSettings value) async {
+    // Each write contains all settings. A newer selection covers queued edits.
+    if (!mounted || _settings.value != value) return;
+    try {
+      await widget.platform.save(value);
+      _lastSaved = value;
+    } on PlatformException {
+      if (!mounted || _settings.value != value) return;
+      _settings.value = _lastSaved;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).saveError)),
+      );
     }
   }
 
   void _openSettings() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => SettingsScreen(
-          initial: _settings!,
-          platform: widget.platform,
-          onSave: (value) async {
-            await widget.platform.save(value);
-            if (mounted) setState(() => _settings = value);
-          },
+        builder: (_) => ValueListenableBuilder(
+          valueListenable: _settings,
+          builder: (context, settings, _) => SettingsScreen(
+            settings: settings!,
+            platform: widget.platform,
+            onChanged: _changeSettings,
+          ),
         ),
       ),
     );
@@ -173,8 +204,10 @@ class _HomeState extends State<_Home> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final settings = _settings;
+  Widget build(BuildContext context) =>
+      ValueListenableBuilder(valueListenable: _settings, builder: _buildHome);
+
+  Widget _buildHome(BuildContext context, ClockSettings? settings, Widget? _) {
     final strings = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
